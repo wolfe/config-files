@@ -544,7 +544,7 @@ alias milely-env="source ~/envs/milely/bin/activate"
 alias env="echo Use w instead of env"
 function w {
     workon $1
-    if [ -e ~/$1 ] ; then cd ~/$1 ; fi
+    if [ -e ~/src/$1 ] ; then cd ~/src/$1 ; fi
 }
 alias iwk-env2="source ~/python-environments/iwk-env2/bin/activate"
 alias django-env="source ~/python-environments/django/bin/activate"
