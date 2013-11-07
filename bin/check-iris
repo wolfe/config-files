@@ -1,0 +1,10 @@
+#!/bin/bash -f
+printf "%16s | %16s | %16s | %s\n" Machine Kernel "Last Reboot" /boot
+echo "--------------------------------------------------------------"
+for i in iris-dev iris-qa iris-demo iris-darweb iris-shift iris-anxiety iris-pact iris-creo iris-breathe iris-sfi iris-fasd iris-painathome iris-test2
+do
+  s="`ssh $i 'who -b'`"
+  df="`ssh $i 'df /boot | tail -1'`"
+  df=`echo $df | awk '{print $5}'`
+  printf "%16s | %16s | %16s | %3s |\n" $i `ssh $i uname -r` "${s: -16 : 16}" $df
+done

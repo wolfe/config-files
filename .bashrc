@@ -15,6 +15,31 @@ export LPDEST=$PRINTER
 alias pg_dump="pg_dump --no-tablespaces --no-owner"
 
 ################################################################
+# Generic bash meta-functions
+################################################################
+# copies function named $1 to name $2
+# Syntax: prepend_to_function <name> [statements...]
+function prepend_to_function()
+{
+    local name=$1
+    shift
+    local body="$@"
+    eval "$(echo "${name}(){"; echo ${body}; declare -f ${name} | tail -n +3)"
+}
+# Syntax: append_to_function <name> [statements...]
+function append_to_function()
+{
+    local name=$1
+    shift
+    local body="$@"
+    eval "$(declare -f ${name} | head -n -1; echo ${body}; echo '}')"
+}
+function copy_function() {
+    declare -F $1 > /dev/null || return 1
+    eval "$(echo "${2}()"; declare -f ${1} | tail -n +2)"
+}
+
+################################################################
 # GIT
 ################################################################
 # Shows the [branch], and an * if there are uncommitted changes. Example:
@@ -121,7 +146,7 @@ export CDPATH='.':~$CDPATH
 export PATH=/usr/texbin:$PATH
 
 # LATEX
-export TEXINPUTS=.:./tex:$HOME/tex:$HOME/tex/combgames:$HOME/prosper:..:../..:$HOME/courses/problems::
+export TEXINPUTS=.:./tex:$HOME/tex:$HOME/tex/combgames:$HOME/prosper:$HOME/courses/problems::
 export TEXPKS=./tex:./fonts/pk:$HOME/fonts/pk::
 export TEXFONTS=./tex:./fonts/tfm:$HOME/fonts/tfm::
 export XDVIFONTS=$TEXPKS
@@ -372,8 +397,9 @@ function createmysqldb {  # Set login credentials for by reading the db-config.p
 	fi
 }
 
-function mysqlp { mysql -u $dbl -p$dbp $*  --socket=/Applications/MAMP/tmp/mysql/mysql.sock; }     # (not used often -- login to mysql, do not select db)
+# VERSION THAT WORKED WITH MAMP
 function mysqlp { ln -sf /Applications/MAMP/tmp/mysql/mysql.sock /tmp/mysql.sock ; mysql -u $dbl -p$dbp $*; }     # (not used often -- login to mysql, do not select db)
+function mysqlp { mysql -u $dbl -p$dbp $*; }     # (not used often -- login to mysql, do not select db)
 function mysqln { mysqlp $db $* ; }               # Run mysql on the current db
 function mysqlc { echo mysql -u $dbl -p$dbp $db;} # Show me the mysql command which I would type to
 function backupdb {
@@ -542,8 +568,9 @@ source /usr/local/bin/virtualenvwrapper.sh
 alias iwk-env="source ~/envs/iwk/bin/activate"
 alias milely-env="source ~/envs/milely/bin/activate"
 alias env="echo Use w instead of env"
-function w {
-    workon $1
+copy_function workon old_workon
+function workon {
+    old_workon $1
     if [ -e ~/src/$1 ] ; then cd ~/src/$1 ; fi
 }
 alias iwk-env2="source ~/python-environments/iwk-env2/bin/activate"
@@ -689,3 +716,15 @@ function redist {
 ### Added by the Heroku Toolbelt
 export PATH=/usr/local/heroku/bin:$PATH
 export PATH=/Applications/Postgres.app/Contents/MacOS/bin:$PATH
+
+export STELLA_OUTBOUND_MAIL=david.wolfe@sheepdog.com
+function auto_fix {
+    if [ $# != 1 ]; then echo Enter exactly one arguments; return 1; fi
+    if [ ! -d $1 ]; then echo Argument must be an app; fi
+    if [ ! -f $1/models.py ]; then echo Argument must be an app; fi
+    if [ ! -f $1/migrations/0001_initial.py ]; then echo App requires initial south migration; fi
+    if [ ! -f `ls $1/migrations/0002*` ]; then echo App requires an additional migration after the iniatial; fi
+    if [ ! -f manage.py ]; then echo Run from package root; fi
+    files=`ls $1/migrations/0*.py`
+    echo ${files: -2}
+}

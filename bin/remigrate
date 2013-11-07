@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e  # Halt on first error
+
+if [ $# != 1 ]; then echo Enter exactly one arguments; return 1; fi
+if [ ! -d $1 ]; then echo Argument must be an app; fi
+if [ ! -f $1/models.py ]; then echo Argument must be an app; fi
+if [ ! -f $1/migrations/0001_initial.py ]; then echo App requires initial south migration; fi
+if [ ! -f manage.py ]; then echo Run from package root; fi
+files=( $1/migrations/0*.py )
+if [ ${#files[*]} -le 1 ]; then echo Appr requires an additional migration beyond the initial; fi
+
+curr=""
+for f in ${files[*]}
+do
+    prev=$curr
+    curr=$f
+done
+
+./manage.py migrate $1 ${prev%.*}  # Trim extension
+rm $1/migrations/*.pyc $curr
+./manage.py schemamigration $1 --auto
+./manage.py migrate $1

@@ -1,0 +1,16 @@
+[user]
+	name = David Wolfe
+	email = davidgameswolfe@gmail.com
+[push]
+	default = matching
+[color]
+	branch = auto
+	diff = auto
+	interactive = auto
+	status = auto
+[alias]
+   lol = log --graph --decorate --pretty=oneline --abbrev-commit
+   lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+   standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author Karl-L
+[core]
+       excludesfile = ~/.gitignore_global

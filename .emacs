@@ -1,4 +1,4 @@
-(add-to-list 'load-path "~/emacs/lisp/")
+(add-to-list 'load-path "~/emacs/")
 
 (defun random-characters (n)
   (let* ((choices "abcdefghjkmnopqrstuvwxyzABCDEFGHJKLMNQRSTUVWXYZ23456789")
@@ -34,6 +34,9 @@
                              (setq c-basic-offset 4)
                              (set-variable 'fill-column 79)))
 
+(add-hook 'html-mode-hook (lambda()
+                            (setq sgml-basic-offset 4)))
+
 ;;; Prevent extraneous tabs
 (setq-default indent-tabs-mode nil)
 (setq-default c-basic-offset 4
@@ -65,7 +68,7 @@
            (local-file (file-relative-name
                         temp-file
                         (file-name-directory buffer-file-name))))
-      (list "pycheckers" (list local-file))))
+      (list "flake8" (list local-file)))) ;; Need to globally pip install flake8
   (add-to-list 'flymake-allowed-file-name-masks
                '("\\.py\\'" flymake-pyflakes-init)))
 
@@ -84,7 +87,7 @@
 (setq send-mail-function 'sendmail-send-it)
 (setq message-send-mail-function 'sendmail-send-it)
 (setq mail-setup-with-from t)
-(setq user-mail-address "wolfe@sheepdoginc.ca")
+(setq user-mail-address "davidgameswolfe@gmail.com")
 (fset 'survey-mail
    [?\C-  escape ?f escape ?w ?\C-x ?4 ?f ?~ ?/ ?t ?m ?p ?/ ?a ?. ?m ?a ?i ?l return escape ?> ?\C-p ?\C-p ?\C-p ?\C-p ?\C-p ?\C-e ?\C-y escape ?< ?\C-e ?\C-x ?o ?\C-f ?\C-  ?\C-e escape ?w ?\C-f ?\C-x ?o ?\C-y ?\C-c ?\C-c ?y ?\C-x ?b ?a ?m backspace ?. ?m ?a ?\C-i return ?\C-x ?k return ?y ?\C-x ?o])
 

@@ -1,15 +1,30 @@
-#!/usr/bin/python
+#!/usr/local/bin/python
 """
-Version 0.3
+Version 0.5
 
 Maintains simple cheeseshop on S3.
 Authored by David Wolfe davidgameswolfe@gmail.com based on
    http://honza.ca/2012/02/how-not-to-depend-on-pypi (Honza Pokorny)
 """
 
+BOTO_MESSAGE = """
+Cannot import boto.  This could be for one of two reasons:
+
+  (1)  Boto is not installed globally.
+
+  (2)  The wrong global python is listed in the top line of this script.
+       Try changing /usr/bin/python to /usr/local/bin/python
+       or whatever is returned by 'which python'
+"""
+
 # Requires installation of boto (works with version 2.5.2)
 import argparse, tempfile, subprocess, shutil, os
-import boto
+try:
+    import boto
+except ImportError:
+    print (BOTO_MESSAGE)
+    exit(1)
+
 from boto.s3.key import Key
 
 # Make sure you have these set up in your environment
@@ -135,6 +150,7 @@ def build_cheeseshop_index():
 
     k = Key(bucket)
     k.key = "%s/index.html" % CHEESESHOP_DIR
+    k.set_metadata('Content-Type', 'text/html')
     k.set_contents_from_string(html % links)
     k.make_public()
 
