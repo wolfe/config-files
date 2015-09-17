@@ -119,7 +119,7 @@ alias ppt="ooimpress"
 export EDITOR='/usr/bin/emacs'
 export VISUAL=$EDITOR
 
-bind 'set show-all-if-ambiguous on'		# Tab once for complete
+# bind 'set show-all-if-ambiguous on'		# Tab once for complete
 
 ulimit -c 0 # Maximum core file size
 
@@ -546,9 +546,12 @@ function list {
   echo "select id,timestamp,password from confirmation_required; select * from mail_users; " | mysqln
 }
 
+function source_if_exists { if [ -e $1 ] ; then source $1 ; fi }
+
 alias ip=ifconfig
 
-source $HOME/Dropbox/bin/git-completion.bash
+source_if_exists $HOME/bin/git-completion.bash
+
 export s=wolfe@199.204.208.10
 alias s="ssh $s"
 alias m="python manage.py"
@@ -564,7 +567,7 @@ export cucns=cucns@204.244.124.128
 
 export WORKON_HOME=$HOME/envs
 export VIRTUALENVWRAPPER_PYTHON=`which python2.7`
-source /usr/local/bin/virtualenvwrapper.sh
+source_if_exists source /usr/local/bin/virtualenvwrapper.sh
 alias iwk-env="source ~/envs/iwk/bin/activate"
 alias milely-env="source ~/envs/milely/bin/activate"
 alias env="echo Use w instead of env"
