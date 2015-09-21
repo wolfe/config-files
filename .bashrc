@@ -13,6 +13,7 @@ export GWT_HOME=/usr/local/gwt
 export LPDEST=$PRINTER
 
 alias pg_dump="pg_dump --no-tablespaces --no-owner"
+alias skey='eval `/usr/bin/ssh-agent` ; ssh-add ~/.ssh/id_rsa'
 
 ################################################################
 # Generic bash meta-functions
@@ -730,4 +731,18 @@ function auto_fix {
     if [ ! -f manage.py ]; then echo Run from package root; fi
     files=`ls $1/migrations/0*.py`
     echo ${files: -2}
+}
+
+function loopdirs {
+    for i in *
+    do
+        if [ -d $i ]; then
+            echo "*******************"
+            echo "* $i"
+            echo "*******************"
+            pushd "./${i}" > /dev/null
+            $*
+            popd > /dev/null
+        fi
+    done
 }
