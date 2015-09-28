@@ -746,3 +746,5 @@ function loopdirs {
         fi
     done
 }
+
+if [ -d /usr/local/MATLAB ]; then MATLAB_PATH=/usr/local/MATLAB/R2015b; fi
