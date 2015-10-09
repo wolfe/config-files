@@ -10,6 +10,9 @@ export w=$CAMPUS
 export HOST=`hostname | sed 's/\..*//'`
 export GWT_HOME=/usr/local/gwt
 
+if [ `hostname` == 'qvtrace' ]; then
+    export PRINTER=RICOH-RICOH-Aficio-SP-3510SF
+fi
 export LPDEST=$PRINTER
 
 alias pg_dump="pg_dump --no-tablespaces --no-owner"
@@ -111,6 +114,8 @@ else
     alias pdf="xpdf"
 fi
 alias ppt="ooimpress"
+
+if [[ "$OSTYPE" == *"linux"* ]] ; then alias open="xdg-open"; fi
 ################################################################
 
 ################################################################
@@ -748,3 +753,4 @@ function loopdirs {
 }
 
 if [ -d /usr/local/MATLAB ]; then MATLAB_PATH=/usr/local/MATLAB/R2015b; fi
+
