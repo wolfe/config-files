@@ -4,7 +4,7 @@
   (let* ((choices "abcdefghjkmnopqrstuvwxyzABCDEFGHJKLMNQRSTUVWXYZ23456789")
          (len (length choices))
          (char (lambda (dummy) (let ((r (random len)))
-                            (substring choices r (+ r 1))))))
+                                 (substring choices r (+ r 1))))))
     (mapconcat char (make-list n 0) "")))
 
 (put 'narrow-to-region 'disabled nil)
@@ -25,14 +25,14 @@
 (global-set-key "\C-cl" 'run-lisp)
 (global-set-key "\C-cs" 'run-scheme)
 (global-set-key "\C-c\C-v" 'browse-url-of-buffer)
-(add-hook 'python-mode-hook '(lambda ()
-                               (flymake-mode t)
-                               (vvb-mode t)
-                               (set-variable 'fill-column 79)))
+(add-hook 'python-mode-hook (lambda ()
+                              (flymake-mode t)
+                              (vvb-mode t)
+                              (set-variable 'fill-column 79)))
 
-(add-hook 'java-mode-hook '(lambda ()
-                             (setq c-basic-offset 4)
-                             (set-variable 'fill-column 79)))
+(add-hook 'java-mode-hook (lambda ()
+                            (setq c-basic-offset 4)
+                            (set-variable 'fill-column 79)))
 
 (add-hook 'html-mode-hook (lambda()
                             (setq sgml-basic-offset 4)))
@@ -43,8 +43,8 @@
               tab-width 4)
 (setq-default js-indent-level 4)
 (setq-default coffee-tab-width 4)
-(add-hook 'php-mode-hook '(lambda ()
-							(c-set-style "php-wolfe")))
+(add-hook 'php-mode-hook (lambda ()
+                           (c-set-style "php-wolfe")))
 
 (c-add-style "php-wolfe" ;; Type C-c C-s when a brace is on its own line
              '("bsd"
@@ -71,14 +71,6 @@
       (list "flake8" (list local-file)))) ;; Need to globally pip install flake8
   (add-to-list 'flymake-allowed-file-name-masks
                '("\\.py\\'" flymake-pyflakes-init)))
-
-(require 'vvb-mode)
-(setq-default vvb-column 80
-              vvb-sticky-p nil
-              vvb-permanent-p t)
-(set-face-background vvb-face "red")
-(setq-default mac-print-font-size-scaling-factor 0.2)
-(setq-default mac-print-monochrome-mode t)
 
 (require 'zencoding-mode)
 (add-hook 'sgml-mode-hook 'zencoding-mode t) ;; Auto-start on any markup modes
@@ -148,3 +140,24 @@
           ((inhibit-field-text-motion t))
         (sort-subr nil 'forward-line 'end-of-line nil nil
                    (lambda (s1 s2) (eq (random 2) 0)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; C++
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(c-add-style "qra-c-style"
+  `("google-c-style"
+    (c-basic-offset 4)))
+
+(autoload 'column-marker-1 "column-marker")
+(add-hook 'c-mode-common-hook
+          (lambda ()
+            (make-local-variable 'c-tab-always-indent)
+            (set-fill-column 100)
+            (column-marker-1 100)
+            (setq c-tab-always-indent t)
+            (c-set-style "QRA" qra-c-style)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; END C++
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
