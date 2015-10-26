@@ -145,6 +145,7 @@
 ;; C++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(load "Google")
 (c-add-style "qra-c-style"
   `("google-c-style"
     (c-basic-offset 4)))
@@ -156,7 +157,7 @@
             (set-fill-column 100)
             (column-marker-1 100)
             (setq c-tab-always-indent t)
-            (c-set-style "QRA" qra-c-style)))
+            (c-set-style "qra-c-style")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; END C++
