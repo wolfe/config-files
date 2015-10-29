@@ -145,18 +145,15 @@
 ;; C++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(load "Google")
-(c-add-style "qra-c-style"
-  `("google-c-style"
-    (c-basic-offset 4)))
-
+(autoload 'google-set-c-style "google-c-style")
 (autoload 'column-marker-1 "column-marker")
+(c-add-style "qra-c-style" ;; Intended to augment google-c-style
+             `((c-basic-offset 4)))
 (add-hook 'c-mode-common-hook
           (lambda ()
-            (make-local-variable 'c-tab-always-indent)
+            (google-set-c-style)
             (set-fill-column 100)
-            (column-marker-1 100)
-            (setq c-tab-always-indent t)
+            (column-marker-1 100) 
             (c-set-style "qra-c-style")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

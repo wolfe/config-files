@@ -754,3 +754,5 @@ function loopdirs {
 
 if [ -d /usr/local/MATLAB ]; then MATLAB_PATH=/usr/local/MATLAB/R2015b; fi
 
+## QRA
+export QCLANG_COMPILED_MODELS_DIR="${HOME}/compiled_models_2015_10_05_1406"
