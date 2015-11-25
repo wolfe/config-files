@@ -1,0 +1,140 @@
+#!/bin/bash -f
+
+function msg {
+  echo "================================================================"
+  echo "===   $1"
+}
+
+MATLAB_PATH=/usr/local/MATLAB/R2015b
+EXTRAS=${HOME}/clang-llvm/llvm/tools/clang/lib/Headers/
+
+CLANG=${HOME}/qclang/build/qclang
+QVTRACE=${HOME}/qvtrace
+DIR=~/compiled_models_2015_10_05_1406
+ARGS="-- -I$MATLAB_PATH/extern/include/ -I$MATLAB_PATH/simulink/include/ -I. -I$EXTRAS"
+
+MODELS=${QVTRACE}/testing/models/qra
+CLI=${QVTRACE}/engine/cli
+
+function run_qclang_on_model {
+  msg "Running qclang on $1"
+  # $CLANG $DIR/$1_ert_rtw/assignment_matrix_data.c $ARGS
+  echo $CLANG $(find $DIR/$1_ert_rtw -name '*.c')
+  $CLANG $(find $DIR/$1_ert_rtw -name '*.c') $ARGS
+}
+
+function trim_file {
+  # Remove trailing whitespace and blank lines.
+  sed -i 's/[ \t]*$//' $1
+  sed -i '/^$/d' $1
+}
+
+function run_all_models {
+  cd $DIR
+  for dir in `ls`; do
+    if [[ "$dir" == *_ert_rtw ]]; then
+      run_qclang_on_model ${dir/_ert_rtw/}
+    fi
+  done
+}
+
+function cli_result {
+    if grep -q 'Violation found' ${1};
+        then echo "invalid"
+    elif grep -q 'No violations are possible' ${1};
+        then echo "valid"
+    elif grep -q 'Unknown' ${1}
+        then echo "unknown"
+    else
+        echo "ERROR: cli_result $1"
+        exit 1
+    fi
+}
+
+function diff_model {
+  model=$1
+  echo "$model"
+  out=/tmp/qclang/out/${model}
+
+  if grep -q 'no output/update code required' $DIR/$1_ert_rtw/$1.c; then
+    echo $1.c >> /tmp/qclang/QCLANG_NO_STEP_FUNCTION
+    echo '  (NO STEP)'
+    return
+  fi
+
+  $CLANG $(find $DIR/${model}_ert_rtw -name '*.c') $ARGS > ${out}.qvt
+  trim_file ${out}.qvt
+
+  if grep -q Error ${out}.qvt; then
+    echo ${model}.qvt: >> /tmp/qclang/QCLANG_ERROR
+    grep message ${out}.qvt | sed 's/^[ \t]*"message" : "/  /;s/"$//' >> /tmp/qclang/QCLANG_ERROR
+    echo '  (QCLANG ERROR)'
+    return
+  fi
+
+  errors=no
+  bases=""
+  for f in $(find ${MODELS}/${model} -name '*.qvt' | sort); do
+    base=`echo $f | rev | cut -d/ -f1 | rev | cut -d. -f1`
+    out=/tmp/qclang/out/${model}-${base}
+
+    $CLANG $(find $DIR/${model}_ert_rtw -name '*.c') -merge_qvt=$MODELS/${model}/$base.qvt $ARGS > ${out}.qvt
+    trim_file ${out}.qvt
+
+    if grep -q Error ${out}.qvt; then  # Never happens, I think.
+      echo ${model}-$base.qvt: `grep message ${out}.qvt | head -1 | sed 's/^[ \t]*"message" : "//;s/"$//'`>> /tmp/qclang/QCLANG_ERROR
+      echo "QCLANG ERRORS HAPPENED ON MERGE; SHOULD NOT HAPPEN!"
+      exit 1
+    fi
+
+    $CLI ${out}.qvt 1>${out}.out 2>${out}.err
+
+    if [ -s ${out}.err ]; then
+        echo "  $base (CLI ERROR)"
+        echo ${model}-${base}.qvt: `head -1 ${out}.err | sed 's/.*\(Exception\|Error\)://'` >> /tmp/qclang/CLI_ERROR
+        errors=yes
+        continue
+    else
+        rm ${out}.err
+    fi
+
+    new=$(cli_result ${out}.out)
+    old=$(cli_result $MODELS/${model}/${base}.z3.cli.out)
+    if [ $new == $old ]; then
+        echo "  $base"
+        bases="${bases} ${base}"
+    else
+        echo "  $base (FAIL $new != $old)"
+        echo ${model}-${base}.out: $new should be $old  >> /tmp/qclang/CLI_DIFF
+        errors=yes
+    fi
+  done
+  if [ $errors == no ]; then
+      echo ${model}:${bases} >> /tmp/qclang/PASS
+  fi
+}
+
+function diff_all_models {
+  cd $MODELS
+  for model in `ls`; do
+    if [ -e $DIR/${model}_ert_rtw/${model}.c ]; then
+      diff_model $model
+    else
+      echo "$model (NOT FOUND)"
+      echo ${model}.c >> /tmp/qclang/C_NOT_FOUND
+    fi
+  done
+}
+
+rm -rf /tmp/qclang ; mkdir -p /tmp/qclang/out
+
+# diff_model abs_float
+# diff_model abs_int
+# diff_model const_test
+# diff_model sum_vector_float
+# diff_model assignment_matrix
+# diff_model assignment_matrix
+# run_qclang_on_model abs_float
+run_qclang_on_model abs_int_simplified
+
+# diff_all_models

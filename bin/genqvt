@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+cd ~/qvtrace/parsers
+mvn install -DskipTests
+
+cd ~/qvtrace/devops
+./launch
+
+cd ~/qvtrace/testing/models/qra/abs_float
+clear
+node ../../constraint_import.js abs_float.qmt invalid.qct
