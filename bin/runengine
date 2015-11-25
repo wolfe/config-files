@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Scripts of note:
+# testing/models/support_scripts/mdl_import_test_oneFile.sh
+# testing/models/mdl_import.js
+
+set -e
+
+cd ~/qvtrace/engine
+mvn install -DskipTests
+./cli ~/tmp/abs_float_invalid.qvt
