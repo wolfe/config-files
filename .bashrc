@@ -438,7 +438,7 @@ function log {
   echo `date` $* >> ~/timecards/bydate/`date "+%Y-%m-%d"`
 }
 
-function rgrep { grep -r -i $1 .  --include=$2 ; }
+function rgrep { grep -r -i $1 .  --include=$2 | cut -c -100 ; }
 function dgrep { grep -r -i $1 .  --include=$2 | egrep -v '/core/PEAR|core/tinymce'; }
 function rmsvns { find . -name '.svn' -prune -exec rm -r -f {} \; ; }
 function rmpycs { find . -name '*.pyc' -exec rm -f {} \; ; }
@@ -741,10 +741,9 @@ function auto_fix {
 function loopdirs {
     for i in *
     do
-        if [ -d $i ]; then
-            echo "*******************"
-            echo "* $i"
-            echo "*******************"
+        if [ -e $i/.git ]; then
+            # Print directory name in red
+            echo -e "\033[1;33m${i}\033[0m"
             pushd "./${i}" > /dev/null
             $*
             popd > /dev/null
@@ -755,4 +754,6 @@ function loopdirs {
 if [ -d /usr/local/MATLAB ]; then MATLAB_PATH=/usr/local/MATLAB/R2015b; fi
 
 ## QRA
+export CLANG_LLVM_DIR="${HOME}/clang-llvm"
+export MATLAB_DIR="/usr/local/MATLAB/R2015b"
 export QCLANG_COMPILED_MODELS_DIR="${HOME}/compiled_models_2015_10_05_1406"
