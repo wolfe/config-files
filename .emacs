@@ -144,18 +144,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; C++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (autoload 'google-set-c-style "google-c-style")
 (autoload 'column-marker-1 "column-marker")
-(c-add-style "qra-c-style" ;; Intended to augment google-c-style
-             `((c-basic-offset 4)))
-(add-hook 'c-mode-common-hook
-          (lambda ()
-            (google-set-c-style)
-            (set-fill-column 100)
-            (column-marker-1 100) 
-            (c-set-style "qra-c-style")))
-
+(add-hook 'c-mode-common-hook (lambda ()
+                                (subword-mode)
+                                (google-set-c-style)
+                                (set-fill-column 100)
+                                (column-marker-1 100)
+                                (setq c-basic-offset 4)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; END C++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
