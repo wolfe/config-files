@@ -438,7 +438,7 @@ function log {
   echo `date` $* >> ~/timecards/bydate/`date "+%Y-%m-%d"`
 }
 
-function rgrep { grep -r -i $1 .  --include=$2 | cut -c -100 ; }
+function rgrep { grep -r -i $1 .  --include=$2 | cut -c -120 ; }
 function dgrep { grep -r -i $1 .  --include=$2 | egrep -v '/core/PEAR|core/tinymce'; }
 function rmsvns { find . -name '.svn' -prune -exec rm -r -f {} \; ; }
 function rmpycs { find . -name '*.pyc' -exec rm -f {} \; ; }
