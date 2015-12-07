@@ -133,8 +133,7 @@ rm -rf /tmp/qclang ; mkdir -p /tmp/qclang/out
 # diff_model const_test
 # diff_model sum_vector_float
 # diff_model assignment_matrix
-# diff_model assignment_matrix
 # run_qclang_on_model abs_float
-run_qclang_on_model abs_int_simplified
+# diff_model matrix_multiply_3x3_float
 
-# diff_all_models
+diff_all_models
