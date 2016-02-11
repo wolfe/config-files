@@ -1,4 +1,4 @@
-#!/bin/bash -f
+#!/bin/bash
 
 function msg {
   echo "================================================================"
@@ -8,19 +8,31 @@ function msg {
 MATLAB_PATH=/usr/local/MATLAB/R2015b
 EXTRAS=${HOME}/clang-llvm/llvm/tools/clang/lib/Headers/
 
+QCLANG_STATUS=${HOME}/qclang-status
 CLANG=${HOME}/qclang/build/qclang
 QVTRACE=${HOME}/qvtrace
-DIR=~/compiled_models_2015_10_05_1406
-ARGS="-- -I$MATLAB_PATH/extern/include/ -I$MATLAB_PATH/simulink/include/ -I. -I$EXTRAS"
+DIR=~/compiled_models
+ARGS="-- -I$MATLAB_PATH/extern/include/ -I$MATLAB_PATH/simulink/include/ -I. -I$EXTRAS -fparse-all-comments"
+SUFFIX=_ert_rtw
 
-MODELS=${QVTRACE}/testing/models/qra
+MODELS=${QVTRACE}/testing/models
 CLI=${QVTRACE}/engine/cli
 
 function run_qclang_on_model {
-  msg "Running qclang on $1"
-  # $CLANG $DIR/$1_ert_rtw/assignment_matrix_data.c $ARGS
-  echo $CLANG $(find $DIR/$1_ert_rtw -name '*.c')
-  $CLANG $(find $DIR/$1_ert_rtw -name '*.c') $ARGS
+  msg "Running qclang on $*"
+  if [ $# == 1 ]; then
+      $CLANG $(find $DIR/$1$SUFFIX -name '*.c') $ARGS
+  elif [ $# == 2 ]; then
+      merge=$MODELS/$1/$2.qvt
+      if [ ! -f $merge ]; then
+          echo "Merge qvt file not found:" $merge
+          exit 1;
+      fi
+      $CLANG $(find $DIR/$1$SUFFIX -name '*.c') -merge-qvt=$merge $ARGS
+  else
+      "Invalid # of arguments to run_qclang_on_model"
+      exit 1;
+  fi
 }
 
 function trim_file {
@@ -31,9 +43,9 @@ function trim_file {
 
 function run_all_models {
   cd $DIR
-  for dir in `ls`; do
-    if [[ "$dir" == *_ert_rtw ]]; then
-      run_qclang_on_model ${dir/_ert_rtw/}
+  for dir in `echo qra/* lm/*`; do
+    if [[ "$dir" == *$SUFFIX ]]; then
+      run_qclang_on_model ${dir}/$SUFFIX/
     fi
   done
 }
@@ -54,20 +66,21 @@ function cli_result {
 function diff_model {
   model=$1
   echo "$model"
-  out=/tmp/qclang/out/${model}
+  out=${QCLANG_STATUS}/out/${model}
+  mkdir -p $(dirname "$out")
 
-  if grep -q 'no output/update code required' $DIR/$1_ert_rtw/$1.c; then
-    echo $1.c >> /tmp/qclang/QCLANG_NO_STEP_FUNCTION
+  CFILE=$DIR/${model}$SUFFIX/$(basename $model).c
+  if grep -q 'no output/update code required' $CFILE; then
+    echo $1.c >> ${QCLANG_STATUS}/QCLANG_NO_STEP_FUNCTION
     echo '  (NO STEP)'
     return
   fi
-
-  $CLANG $(find $DIR/${model}_ert_rtw -name '*.c') $ARGS > ${out}.qvt
+  $CLANG $(find $DIR/${model}$SUFFIX -name '*.c') $ARGS > ${out}.qvt
   trim_file ${out}.qvt
 
-  if grep -q Error ${out}.qvt; then
-    echo ${model}.qvt: >> /tmp/qclang/QCLANG_ERROR
-    grep message ${out}.qvt | sed 's/^[ \t]*"message" : "/  /;s/"$//' >> /tmp/qclang/QCLANG_ERROR
+  if grep -q '"objectType" : "Error"' ${out}.qvt; then
+    echo ${model}.qvt: >> ${QCLANG_STATUS}/QCLANG_ERROR
+    grep '"message" :' ${out}.qvt | sed 's/^[ \t]*"message" : "/  /;s/"$//' | sed 's/",$//' >> ${QCLANG_STATUS}/QCLANG_ERROR
     echo '  (QCLANG ERROR)'
     return
   fi
@@ -76,26 +89,44 @@ function diff_model {
   bases=""
   for f in $(find ${MODELS}/${model} -name '*.qvt' | sort); do
     base=`echo $f | rev | cut -d/ -f1 | rev | cut -d. -f1`
-    out=/tmp/qclang/out/${model}-${base}
+    out=${QCLANG_STATUS}/out/${model}-${base}
 
-    $CLANG $(find $DIR/${model}_ert_rtw -name '*.c') -merge_qvt=$MODELS/${model}/$base.qvt $ARGS > ${out}.qvt
+    $CLANG $(find $DIR/${model}$SUFFIX -name '*.c') -merge-qvt=$MODELS/${model}/$base.qvt $ARGS > ${out}.qvt
     trim_file ${out}.qvt
 
     if grep -q Error ${out}.qvt; then  # Never happens, I think.
-      echo ${model}-$base.qvt: `grep message ${out}.qvt | head -1 | sed 's/^[ \t]*"message" : "//;s/"$//'`>> /tmp/qclang/QCLANG_ERROR
-      echo "QCLANG ERRORS HAPPENED ON MERGE; SHOULD NOT HAPPEN!"
-      exit 1
+      # echo ${model}-$base.qvt: `grep message ${out}.qvt | head -1 | sed 's/^[ \t]*"message" : "//;s/"$//'`>> ${QCLANG_STATUS}/QCLANG_ERROR
+      echo " " $base.qvt "(USER CONSTRAINT ERROR)"
+      echo "" $model-$base.qvt >> ${QCLANG_STATUS}/QCLANG_ERROR
+      grep message ${out}.qvt | sed 's/^[ \t]*"message" : "/  /;s/"$//' | sed 's/",$//' >> ${QCLANG_STATUS}/QCLANG_ERROR
+      errors=yes
+      continue
     fi
 
-    $CLI ${out}.qvt 1>${out}.out 2>${out}.err
+    timeout 10 $CLI ${out}.qvt 1>${out}.out 2>${out}.err
+    if [ $? -eq 124 ]; then
+        echo "  $base (TIMEOUT)"
+        echo "${model}-${base}.qvt: (TIMEOUT)" >> ${QCLANG_STATUS}/CLI_ERROR
+        errors=yes
+        rm -f ${out}.err
+        continue
+    fi
 
     if [ -s ${out}.err ]; then
         echo "  $base (CLI ERROR)"
-        echo ${model}-${base}.qvt: `head -1 ${out}.err | sed 's/.*\(Exception\|Error\)://'` >> /tmp/qclang/CLI_ERROR
+        echo ${model}-${base}.qvt: `head -1 ${out}.err | sed 's/.*\(Exception\|Error\)://'` >> ${QCLANG_STATUS}/CLI_ERROR
         errors=yes
         continue
     else
-        rm ${out}.err
+        rm -f ${out}.err
+    fi
+
+    z3out=$MODELS/${model}/${base}.z3.cli.out
+    if [ ! -f ${z3out} ]; then
+        echo "  $base (NO $z3out)"
+        echo "${model}-${base}.out: No ${z3out}" >> ${QCLANG_STATUS}/Z3_MISSING
+        errors=yes
+        continue
     fi
 
     new=$(cli_result ${out}.out)
@@ -105,35 +136,33 @@ function diff_model {
         bases="${bases} ${base}"
     else
         echo "  $base (FAIL $new != $old)"
-        echo ${model}-${base}.out: $new should be $old  >> /tmp/qclang/CLI_DIFF
+        echo ${model}-${base}.out: $new should be $old  >> ${QCLANG_STATUS}/CLI_DIFF
         errors=yes
     fi
   done
   if [ $errors == no ]; then
-      echo ${model}:${bases} >> /tmp/qclang/PASS
+      echo ${model}:${bases} >> ${QCLANG_STATUS}/PASS
   fi
 }
 
 function diff_all_models {
+  rm -rf out
+  rm -f CLI_* C_NOT_FOUND QCLANG_* PASS Z3_MISSING
   cd $MODELS
-  for model in `ls`; do
-    if [ -e $DIR/${model}_ert_rtw/${model}.c ]; then
+  for model in `echo qra/* lm/*`; do
+    if [ -e $DIR/${model}$SUFFIX/$(basename $model).c ]; then
       diff_model $model
     else
       echo "$model (NOT FOUND)"
-      echo ${model}.c >> /tmp/qclang/C_NOT_FOUND
+      echo ${model}.c >> ${QCLANG_STATUS}/C_NOT_FOUND
     fi
   done
 }
 
-rm -rf /tmp/qclang ; mkdir -p /tmp/qclang/out
+cd ${QCLANG_STATUS}
+# diff_model qra/product_3input_multidimensional
+# run_qclang_on_model qra/abs_float
 
-# diff_model abs_float
-# diff_model abs_int
-# diff_model const_test
-# diff_model sum_vector_float
-# diff_model assignment_matrix
-# run_qclang_on_model abs_float
-# diff_model matrix_multiply_3x3_float
-
+# diff_model lm/m37_boolean_casting
+# diff_model qra/bus_assignSig1_selectSig1
 diff_all_models
