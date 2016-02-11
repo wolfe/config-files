@@ -18,7 +18,8 @@
                                 ("\\.yaml\\'" . fundamental-mode)
                                 ("\\.less\\'" . less-mode)
                                 ("\\.h\\'" . c++-mode)
-                                ("\\.fig\\'" . fig-mode))
+                                ("\\.fig\\'" . fig-mode)
+                                ("\\.m\\'" . matlab-mode))
                               auto-mode-alist
                               '((".*" . text-mode))))
 (global-set-key "\C-x\C-k" 'bury-buffer)
@@ -155,3 +156,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; END C++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; QRA
+  (add-to-list 'load-path "~/emacs/matlab-emacs-src")
+  (load-library "matlab-load")
