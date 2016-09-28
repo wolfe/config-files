@@ -19,6 +19,7 @@
                                 ("\\.less\\'" . less-mode)
                                 ("\\.h\\'" . c++-mode)
                                 ("\\.fig\\'" . fig-mode)
+                                ("\\.g4\\'" . antlr-mode)
                                 ("\\.m\\'" . matlab-mode))
                               auto-mode-alist
                               '((".*" . text-mode))))
@@ -95,6 +96,8 @@
   "Major mode for editing Markdown files" t)
 (setq auto-mode-alist
       (cons '("\\.md" . markdown-mode) auto-mode-alist))
+(setq auto-mode-alist
+      (cons '("\\.mdl" . fundamental-mode) auto-mode-alist))
 
 ;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/folder-where-you-put-scss-mode-el"))
 (autoload 'scss-mode "scss-mode")
@@ -160,3 +163,4 @@
 ;; QRA
   (add-to-list 'load-path "~/emacs/matlab-emacs-src")
   (load-library "matlab-load")
+(put 'downcase-region 'disabled nil)
