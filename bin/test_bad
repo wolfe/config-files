@@ -1,0 +1,17 @@
+#!/bin/bash
+function build {
+    rm ~/qvtrace/devops/resources/tomcat/logs/catalina.out
+    cd ~/qvtrace/devops
+    mvn install -DskipTests && ./launch
+}
+
+cd ~/qvtrace/testing/models
+source support_scripts/set_unit_test_dir.sh
+
+# Parallel version of the above
+function test {
+    cd ~/qvtrace/testing/models
+    ls qra/abs_*/*.qvt qra/bus_2floatIn_1floatOut_sig2/*.qvt qra/compare_to_constant_floatIn_booleOut/*.qvt | awk -F '.qvt$' 'BEGIN {printf "parallel --gnu ./support_scripts/constraint_import_test_oneFile.sh ::: "} {printf "%s.qct ", $1}' | bash
+}
+
+(build && sleep 1 && test) | tee /tmp/doug_tests.log

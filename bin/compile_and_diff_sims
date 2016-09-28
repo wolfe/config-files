@@ -1,0 +1,36 @@
+#!/bin/bash
+
+rm -f /tmp/*.m
+
+function compile_all_models {
+    cd ${QCLANG_ROOT}/scripts
+    ./compile_simulink_models
+    cd ../build/
+    tar cfz ~/compiled_models_3.tgz compiled_models
+    cd
+    rm -rf ./compiled_models/*
+    tar xfz ./compiled_models_3.tgz
+    cd ~/compiled_models
+    for i in `find . -name '*.?'`; do
+        sed 's/.*source code generated on :.*//' -i $i
+    done
+}
+
+function make_cs_diffs {
+    cd /tmp
+    for i in *.m; do
+        sed 's/.* MATLAB function for configuration set generated on .*//' -i $i
+        sed 's/^function cs=.*//' -i $i
+    done
+    rm -f base_cs cs_diffs.out ; cp abs_int.m base_cs
+    for i in *.m; do
+        echo ======= $i ======= >> /tmp/cs_diffs.out
+        diff base_cs $i >> /tmp/cs_diffs.out
+    done
+}
+
+compile_all_models
+make_cs_diffs
+
+cd ~/compiled_models
+git diff
