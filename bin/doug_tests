@@ -1,0 +1,33 @@
+#!/bin/bash
+
+function build {
+    rm ~/qvtrace/devops/resources/tomcat/logs/catalina.out
+    cd ~/qvtrace/devops
+    mvn install -DskipTests && ./launch
+}
+
+function test {
+    set -v
+    cd ~/qvtrace/testing/models
+
+    ./mdl_import_test.sh qra
+    ./mdl_import_test.sh lm
+    ./mdl_import_test.sh lm-contract1
+    ./mdl_import_test.sh honeywell
+    # tmp
+    # ./constraint_import_test.sh qra
+    # ./constraint_import_test.sh lm
+    # ./constraint_import_test.sh lm-contract1
+    # ./constraint_import_test.sh honeywell
+    # tmp
+    # ./test_engine.sh
+    set +v
+}
+
+echo "Sending output to /tmp/doug_tests.log"
+(build && sleep 1 && test) | tee /tmp/doug_tests.log
+# test | tee /tmp/doug_tests.log
+echo "======================== SUMMARY ==========================="h
+egrep 'Fail|fail|31m' /tmp/doug_tests.log
+echo "============================================================"
+echo "Sent output to /tmp/doug_tests.log"
