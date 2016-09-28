@@ -438,7 +438,7 @@ function log {
   echo `date` $* >> ~/timecards/bydate/`date "+%Y-%m-%d"`
 }
 
-function rgrep { grep -r -i $1 .  --include=$2 | cut -c -120 ; }
+function rgrep { grep -r -i $1 .  --include=$2 | cut -c -240 ; }
 function dgrep { grep -r -i $1 .  --include=$2 | egrep -v '/core/PEAR|core/tinymce'; }
 function rmsvns { find . -name '.svn' -prune -exec rm -r -f {} \; ; }
 function rmpycs { find . -name '*.pyc' -exec rm -f {} \; ; }
@@ -742,9 +742,13 @@ function loopdirs {
     for i in *
     do
         if [ -e $i/.git ]; then
-            # Print directory name in red
-            echo -e "\033[1;33m${i}\033[0m"
+            # Print directory name in yellow and branch name in green
+            echo -en "\033[1;33m"
+            printf '  %-10s' "${i}"
+            echo -en "\033[0m";
             pushd "./${i}" > /dev/null
+            branch="$(git rev-parse --abbrev-ref HEAD)"
+            echo -e " \033[1;32m${branch}\033[0m"
             $*
             popd > /dev/null
         fi
@@ -754,6 +758,71 @@ function loopdirs {
 if [ -d /usr/local/MATLAB ]; then MATLAB_PATH=/usr/local/MATLAB/R2015b; fi
 
 ## QRA
-export CLANG_LLVM_DIR="${HOME}/clang-llvm"
-export MATLAB_DIR="/usr/local/MATLAB/R2015b"
-export QCLANG_COMPILED_MODELS_DIR="${HOME}/compiled_models_2015_10_05_1406"
+  export CLANG_LLVM_ROOT="${HOME}/clang-llvm"
+  export MATLAB_ROOT="/usr/local/MATLAB/R2015b"
+  export QCLANG_ROOT=${HOME}/qclang
+  export QVTRACE_ROOT=${HOME}/qvtrace
+
+alias qanalyze=${HOME}/qclang/scripts/qanalyze
+
+function rebuild {
+    rm -f ~/qvtrace/devops/resources/tomcat/logs/catalina.out
+    rm -f ~/qvtrace/models/*
+    pushd ~/qvtrace/devops > /dev/null
+    mvn install -DskipTests && ./launch
+    popd > /dev/null
+}
+
+function r {
+    rebuild && sleep 1
+}
+
+function relaunch {
+    pushd ~/qvtrace/devops > /dev/null
+    ./launch
+    popd > /dev/null
+}
+
+function meld2 {
+    meld ~/qvtrace/testing/models/$1 ~/qvtrace/testing/models/tmp/$1
+}
+
+function cp2 {
+    cp ~/qvtrace/testing/models/tmp/$1 ~/qvtrace/testing/models/$1
+}
+
+function meldsort2 {
+    IGNORE='^\s*"(sourceIOID|targetIOID)":'
+    IGNORE='^\s*"(name": ".*\d{4}(-\d\d){2}T(\d\d-){3}\d{3}|id|_id|x|y|lz|sourceIOID|targetIOID)"'
+    meld <(sort $1     | grep -Ev "${IGNORE}") \
+         <(sort tmp/$1 | grep -Ev "${IGNORE}")
+}
+
+function do2 {
+    cd ~/qvtrace/parsers \
+        && git stash && git checkout master && git stash pop \
+        && (mvn test -Dtest=TmpTest | tee /tmp/a) \
+        && git stash && git checkout matrix-node && git stash pop \
+        && (mvn test -Dtest=TmpTest | tee /tmp/b)
+}
+
+# grep Object bun | grep -v '\* @see' | egrep -v '^ *//' | wc
+
+function ppjson {
+    cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2))' | sed 's/[ \t]*$//'
+}
+
+function trm {
+    rm ~/qvtrace/testing/models/qra/const_matrix/valid.q?t
+    rm ~/qvtrace/testing/models/qra/lookup_1d_linear_floatIn_floatOut/valid.q?t
+    rm ~/qvtrace/testing/models/qra/switch_16bit_8way/valid.q?t
+    rm ~/qvtrace/testing/models/lm-contract1/2_tustin/r4a.q?t
+    rm ~/qvtrace/testing/models/lm-contract1/2_tustin/r4b.q?t
+}
+function tpop {
+    git checkout ~/qvtrace/testing/models/qra/const_matrix/
+    git checkout ~/qvtrace/testing/models/qra/lookup_1d_linear_floatIn_floatOut/
+    git checkout ~/qvtrace/testing/models/qra/switch_16bit_8way/
+    git checkout ~/qvtrace/testing/models/lm-constract1/2_tustin/
+    git checkout ~/qvtrace/testing/models/lm-constract1/2_tustin/
+}
