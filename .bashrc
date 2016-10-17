@@ -826,3 +826,14 @@ function tpop {
     git checkout ~/qvtrace/testing/models/lm-constract1/2_tustin/
     git checkout ~/qvtrace/testing/models/lm-constract1/2_tustin/
 }
+
+function a {
+    cat ~/catalina.out | grep 'WARNING: Block' > /tmp/a
+}
+
+function b {
+    cat /tmp/a | sed 's/WARNING: Block parameter in component //' | sort | uniq -c > /tmp/b
+    cat /tmp/b | sort -g > /tmp/c
+    cat /tmp/b | awk -v N=3 '{print $N}' | sort | uniq -c | sort > /tmp/d
+}
+

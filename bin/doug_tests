@@ -27,7 +27,7 @@ function test {
 echo "Sending output to /tmp/doug_tests.log"
 (build && sleep 1 && test) | tee /tmp/doug_tests.log
 # test | tee /tmp/doug_tests.log
-echo "======================== SUMMARY ==========================="h
+echo "======================== SUMMARY ==========================="
 egrep 'Fail|fail|31m' /tmp/doug_tests.log
 echo "============================================================"
 echo "Sent output to /tmp/doug_tests.log"
