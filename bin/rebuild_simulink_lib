@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e  # exit on first errro
+
+rm -rf ~/.m2/repository/org/conqat/lib/simulink/simulink/2017.10.qra1/
+cd ~/qvtrace/dependencies/simulink
+ant clean compile
+cd ~/qvtrace/dependencies
+./installJars

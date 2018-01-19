@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+f = open('/home/wolfe/Dropbox/wolfe/notes/OWL2', 'r')
+def is_good(line):
+    last = 'a'
+    for c in line:
+        if c < last:
+            last = c
+        else:
+            return False
+    return True
+
+for line in f:
+    line = line.strip()
+    if is_good(line):
+        print line

@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cd ~/qvtrace/testing/models
+cd ~/qvtrace/models
 diff <(sort     $1 | grep -Ev '^\s*"(name|id|_id|x|y|lz|sourceIOID|targetIOID)":')\
      <(sort tmp/$1 | grep -Ev '^\s*"(name|id|_id|x|y|lz|sourceIOID|targetIOID)":')

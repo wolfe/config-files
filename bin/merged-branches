@@ -1,0 +1,10 @@
+#!/bin/bash
+# git fetch --prune
+IFS=$'\n'       # make newlines the only separator
+for i in `git branch -r | sed "s/^[ \t]*//"`; do
+    if [[ $i != *"->"* && $i != origin/master ]]; then
+        if [[ ! `git log origin/master..$i` ]]; then
+            echo $i
+        fi
+    fi
+done

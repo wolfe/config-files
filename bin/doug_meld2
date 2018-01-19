@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd ~/qvtrace/models
+source support_scripts/utils.sh
+IFS=$'\n'
+for i in `find ./tmp -name '*.out'`
+do
+    o="${i#./tmp/}"
+    n="tmp/${o}"
+    if [ ! $o ] ; then echo "SKIPPING" ; continue; fi
+        meld $o $n
+    if [ $? == 1 ] ; then exit 1; fi  # Control-C probably
+done
+unset IFS

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+a1='s/IQvtVariable/AstVariable/g'
+for f in `find . -name '*.java'`
+do
+    sed -i "${a1}" $f
+done

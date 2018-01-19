@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+set -x
+
+GIT_COMMIT=$1
+
+cd ~/qvtrace/build/deployment
+./buildInstance -c $GIT_COMMIT
+./buildInstance -d -c $GIT_COMMIT
+./buildGatekeeper
+./buildSelfExtractingInstaller
+mv selfExtractingInstaller/QVtrace-Linux.sh .
+./QVtrace-Linux.sh

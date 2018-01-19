@@ -1,0 +1,20 @@
+#!/bin/bash
+
+function rebuild {
+    rm -f ~/qvtrace/resources/tomcat/logs/catalina.out /tmp/*.{qmt,qct,qvt,mdl,mat} /tmp/qvtraceRuntime/*
+    pushd ~/qvtrace > /dev/null
+    ./stop
+    mvn install -DskipTests && ./launch
+    popd > /dev/null
+}
+
+function bench {
+    cd ~/qvtrace
+    git checkout $1
+    (rebuild && sleep 1) > /dev/null
+    cd ~/qvtrace/models
+    time (./test_webclient.sh >& /dev/null)
+}
+
+bench ken-h2
+bench master

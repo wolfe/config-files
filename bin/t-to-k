@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+
+cd ~/qvtrace
+git checkout .
+
+# JAVA files
+echo "Repairing Settings.TIMESTEP_SYMBOL"
+sed -i 's/"t"/"k"/' ./src/com/qra/qvtrace/utils/Settings.java
+
+echo "Repairing MCode.g4"
+sed -i "s/'t'/'k'/" ./src/com/qra/qvtrace/mcode/parser/MCode.g4
+
+for dir in src test
+do
+    echo "Repairing java files in ${dir}"
+    for i in `find $dir -name '*.java'`
+    do
+        sed -i 's/{t}/{k}/g' $i
+        sed -i 's/{t-/{k-/g' $i
+    done
+done
+
+echo "Reparing JavaScript"
+sed -i 's/"t"/"k"/g' WebContent/lib/expression-parser/expression-parser.js
+
+echo "Repairing UI tests"
+for i in `find ./webclient/test -name '*.js'`
+do
+    sed -i 's/{t}/{k}/g' $i
+done
+
+echo "Repairing cli.out files"
+for i in `find ./models -name '*.out'`
+do
+    sed -i 's/{t}/{k}/g' $i
+done
+
+echo "Reparing qct and qvt files"
+for i in `find ./models -name '*.q?t'`
+do
+    sed -i 's/{t}/{k}/g' $i
+    sed -i 's/{t-/{k-/g' $i
+done

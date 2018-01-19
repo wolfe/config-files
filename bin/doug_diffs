@@ -5,7 +5,7 @@ function filt {
     # cat $1 | sed 's/,*$//g' | grep -Ev "${IGNORE}"
 }
 
-cd ~/qvtrace/testing/models
+cd ~/qvtrace/models
 source support_scripts/utils.sh
 IFS=$'\n'
 for i in `grep 31m /tmp/doug_tests.log`
@@ -15,7 +15,7 @@ do
         n="tmp/${o}"
     elif [[ "{$i}" == *"Output changed"* ]] ; then
         type=`echo "${i}" | sed 's/.*Analyzing.*using \(.*\):.*/\1/' | tr '[:upper:]' '[:lower:]'`
-        path=`echo "${i}" | sed 's#.*/testing/models/\(.*\)\.qvt.*#\1#'`
+        path=`echo "${i}" | sed 's#.*/models/\(.*\)\.qvt.*#\1#'`
         o="${path}.${type}.cli.out"
         n="tmp/${o}"
     fi

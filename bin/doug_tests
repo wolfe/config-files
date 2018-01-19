@@ -1,19 +1,19 @@
 #!/bin/bash
 
 function build {
-    rm ~/qvtrace/devops/resources/tomcat/logs/catalina.out
-    cd ~/qvtrace/devops
+    rm ~/qvtrace/resources/tomcat/logs/catalina.out
+    cd ~/qvtrace
     mvn install -DskipTests && ./launch
 }
 
 function test {
     set -v
-    cd ~/qvtrace/testing/models
+    cd ~/qvtrace/models
 
     ./mdl_import_test.sh qra
-    ./mdl_import_test.sh lm
-    ./mdl_import_test.sh lm-contract1
-    ./mdl_import_test.sh honeywell
+    # ./mdl_import_test.sh lm
+    # ./mdl_import_test.sh lm-contract1
+    # ./mdl_import_test.sh honeywell
     # tmp
     # ./constraint_import_test.sh qra
     # ./constraint_import_test.sh lm

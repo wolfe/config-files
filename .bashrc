@@ -12,6 +12,8 @@ export GWT_HOME=/usr/local/gwt
 
 if [ `hostname` == 'qvtrace' ]; then
     export PRINTER=RICOH-RICOH-Aficio-SP-3510SF
+elif [ `hostname` == 'nash' ]; then
+    export PRINTER=QRA
 fi
 export LPDEST=$PRINTER
 
@@ -55,10 +57,10 @@ export PATH=/usr/local/bin:$PATH
 alias gitl='git log --pretty=format:"%h - %an, %aD : %s"'
 alias her=heroku
 function parse_git_dirty {
-  [[ $(/usr/local/git/bin/git status 2> /dev/null | tail -n1) != "nothing to commit (working directory clean)" ]] && echo "*"
+  [[ $(git status 2> /dev/null | tail -n1) != *"nothing to commit"* ]] && echo "*"
 }
 function parse_git_branch {
-  /usr/local/git/bin/git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/[\1$(parse_git_dirty)]/"
+  git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/[\1$(parse_git_dirty)]/"
 }
 
 PS1='\w$(parse_git_branch): '
@@ -73,7 +75,6 @@ PS2=">> "
 # ALIASES
 ################################################################
 alias du="du -h"
-alias ant="ant test-noselenium"
 alias cgsuite="java -classpath ~/Desktop/cgsuite/out cgsuite.ui.Main"
 alias cgsuite="cd ~/Desktop/cgsuite-0.7 ; java -Xmx512m -jar ./cgsuite.jar"
 alias tomcat="~/tomcat/bin/startup.sh"
@@ -115,7 +116,11 @@ else
 fi
 alias ppt="ooimpress"
 
-if [[ "$OSTYPE" == *"linux"* ]] ; then alias open="xdg-open"; fi
+if [[ "$OSTYPE" == *"linux"* ]] ; then
+    function open {
+        for i in $*; do xdg-open $i; done
+    }
+fi
 ################################################################
 
 ################################################################
@@ -438,8 +443,28 @@ function log {
   echo `date` $* >> ~/timecards/bydate/`date "+%Y-%m-%d"`
 }
 
-function rgrep { grep -r -i $1 .  --include=$2 | cut -c -240 ; }
-function dgrep { grep -r -i $1 .  --include=$2 | egrep -v '/core/PEAR|core/tinymce'; }
+function oldrgrep {
+    PATTERN="${@: -1}"
+    ARGS="${@:1:$(($#-1))}"
+    grep -r $ARGS . --include=$PATTERN | cut -c -240 ;
+    echo grep -r $ARGS . --include=$PATTERN
+}
+
+function rgrep {
+    DIR="."
+    ARGS=""
+    SEARCH=""
+    PATTERN="*"
+    for arg; do
+        if [ -d "$arg" ]; then DIR="$arg";
+        elif [[ $arg == -* ]]; then ARGS=" ${ARGS} ${arg}"
+        elif [[ "$SEARCH" == "" ]]; then SEARCH="$arg"
+        else PATTERN=$arg
+        fi
+    done
+    grep -r $SEARCH $ARGS $DIR --include=$PATTERN | cut -c -240 ;
+}
+
 function rmsvns { find . -name '.svn' -prune -exec rm -r -f {} \; ; }
 function rmpycs { find . -name '*.pyc' -exec rm -f {} \; ; }
 function rmgits { find . -name '.git*' -prune -exec rm -r -f {} \; ; }
@@ -765,30 +790,45 @@ if [ -d /usr/local/MATLAB ]; then MATLAB_PATH=/usr/local/MATLAB/R2015b; fi
 
 alias qanalyze=${HOME}/qclang/scripts/qanalyze
 
-function rebuild {
-    rm -f ~/qvtrace/devops/resources/tomcat/logs/catalina.out
-    rm -f ~/qvtrace/models/*
-    pushd ~/qvtrace/devops > /dev/null
-    mvn install -DskipTests && ./launch
+function obfuscate {
+    rm -f ~/qvtrace/resources/tomcat/logs/*
+    pushd ~/qvtrace > /dev/null
+    # mvn install -Pdeploy
+    ./launch
     popd > /dev/null
+    cd ~/qvtrace/models
 }
 
 function r {
+    cd ~/qvtrace
+    # ./launch stop
     rebuild && sleep 1
 }
 
+function clean {
+    # rm -rf ~/qvtrace/resources/apache-tomcat-7.0.61/temp
+    # git checkout ~/qvtrace/resources/apache-tomcat-7.0.61/temp
+    rm -rf /tmp/qvtraceRuntime/*
+    /bin/cp -rf ~/qvtrace/WebContent/* ~/qvtrace/resources/apache-tomcat-7.0.61/webapps/ROOT/
+}
+
 function relaunch {
-    pushd ~/qvtrace/devops > /dev/null
+    pushd ~/qvtrace > /dev/null
+    ./launch stop
+    mvn clean
+    mvn install -DskipTests
     ./launch
     popd > /dev/null
 }
 
 function meld2 {
-    meld ~/qvtrace/testing/models/$1 ~/qvtrace/testing/models/tmp/$1
+    IGNORE='^\s*"(_id|xdir|xpos|ydir)"'
+    meld <(ppjson ~/qvtrace/models/$1     | grep -Ev "${IGNORE}") \
+         <(ppjson ~/qvtrace/models/tmp/$1 | grep -Ev "${IGNORE}")
 }
 
 function cp2 {
-    cp ~/qvtrace/testing/models/tmp/$1 ~/qvtrace/testing/models/$1
+    cp ~/qvtrace/models/tmp/$1 ~/qvtrace/models/$1
 }
 
 function meldsort2 {
@@ -809,26 +849,29 @@ function do2 {
 # grep Object bun | grep -v '\* @see' | egrep -v '^ *//' | wc
 
 function ppjson {
-    cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2))' | sed 's/[ \t]*$//'
+    cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2, sort_keys=True))' | sed 's/[ \t]*$//'
 }
 
 function trm {
-    rm ~/qvtrace/testing/models/qra/const_matrix/valid.q?t
-    rm ~/qvtrace/testing/models/qra/lookup_1d_linear_floatIn_floatOut/valid.q?t
-    rm ~/qvtrace/testing/models/qra/switch_16bit_8way/valid.q?t
-    rm ~/qvtrace/testing/models/lm-contract1/2_tustin/r4a.q?t
-    rm ~/qvtrace/testing/models/lm-contract1/2_tustin/r4b.q?t
+    rm ~/qvtrace/models/qra/const_matrix/valid.q?t
+    rm ~/qvtrace/models/qra/lookup_1d_linear_floatIn_floatOut/valid.q?t
+    rm ~/qvtrace/models/qra/switch_16bit_8way/valid.q?t
+    rm ~/qvtrace/models/lm-contract1/2_tustin/r4a.q?t
+    rm ~/qvtrace/models/lm-contract1/2_tustin/r4b.q?t
 }
 function tpop {
-    git checkout ~/qvtrace/testing/models/qra/const_matrix/
-    git checkout ~/qvtrace/testing/models/qra/lookup_1d_linear_floatIn_floatOut/
-    git checkout ~/qvtrace/testing/models/qra/switch_16bit_8way/
-    git checkout ~/qvtrace/testing/models/lm-constract1/2_tustin/
-    git checkout ~/qvtrace/testing/models/lm-constract1/2_tustin/
+    git checkout ~/qvtrace/models/qra/const_matrix/
+    git checkout ~/qvtrace/models/qra/lookup_1d_linear_floatIn_floatOut/
+    git checkout ~/qvtrace/models/qra/switch_16bit_8way/
+    git checkout ~/qvtrace/models/lm-constract1/2_tustin/
+    git checkout ~/qvtrace/models/lm-constract1/2_tustin/
 }
 
 function a {
-    cat ~/catalina.out | grep 'WARNING: Block' > /tmp/a
+    cd ~/qvtrace
+    mvn clean test -Dtest=MdlToQvtTest -Dqra.compileqcts=0 >& /tmp/test.log
+    cat /tmp/test.log | grep 'WARNING: Block' > /tmp/a
+    b
 }
 
 function b {
@@ -837,3 +880,127 @@ function b {
     cat /tmp/b | awk -v N=3 '{print $N}' | sort | uniq -c | sort > /tmp/d
 }
 
+alias checkstyle='java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOME/qvtrace/resources/qra_checks.xml'
+
+function checkstyles {
+    # Run checkstyles on only those files which are committed which differ from origin/master
+    cd ~/qvtrace
+    git fetch origin master
+    java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOME/qvtrace/resources/qra_checks.xml checkstyle `git diff --name-only origin/master..HEAD | grep "java$"`
+}
+
+function countbugs {
+    FINDBUGS=target/findbugsXml.xml
+    TMP=/tmp/findbugsXml.xml.tmp
+    LAST=/tmp/lastbugs.xml
+    BUG=' <BugInstance'
+    cd ~/qvtrace
+
+    mvn -Dmaven.javadoc.skip=true site
+    xml_pp target/findbugsXml.xml > /tmp/findbugsXml.xml
+    /bin/mv /tmp/findbugsXml.xml target/findbugsXml.xml
+    current=`cat ${FINDBUGS} | grep "${BUG}"  | wc -l`
+    if [ ! -f ${LAST} ]; then
+        /bin/cp ${FINDBUGS} ${LAST}
+    else
+        previous=`cat ${LAST} | grep "${BUG}" | wc -l`
+        new=$(($current - $previous))
+        if [ $current -lt $previous ]; then /bin/cp ${FINDBUGS} ${LAST}; fi
+        if [ $current -gt $previous ]; then
+            echo "New Findbugs --- you should run"
+            echo "   diff ${LAST} ${FINDBUGS}"
+        fi
+    fi
+    echo "$current total findbugs, change of $new since last new low."
+}
+
+function sim1 {
+    pushd ~/dependencies
+    ant clean
+    ant
+    popd
+}
+
+function sim2 {
+    pushd ~/qvtrace
+    cp -f ~/dependencies/dist/simulink.jar ./resources/repository/org/conqat/lib/simulink/simulink/2015.2qra1/simulink.jar
+    popd
+}
+
+function sim3 {
+    rm -rf ~/.m2/repository/org/conqat/lib/simulink/simulink
+    rm -rf ~/.m2/repository/org/conqat/lib/simulink/conqat
+    rm -rf ~/.m2/repository/org/conqat/lib/simulink/cup-runtime
+    rm -rf ~/.m2/repository/com/reprisesoftware/rlmez
+    mvn validate
+    mvn install -DskipTests
+    ~/qvtrace/cli ~/tmp/blocklibs/orig/simulink.mdl | wc
+}
+
+function sim4 {
+    pushd ~/qvtrace
+    rm -rf ./resources/repository/org
+    mvn install -DskipTests
+    popd
+}
+
+function sim {
+    sim1
+    sim2
+    sim3
+}
+
+function onmaster {
+    if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]]
+    then
+        return 1
+    fi
+}
+
+function gitlsmerged {
+    onmaster \
+     && (git branch -r --merged | grep -v master | sed 's/origin\///' | xargs -n 1 echo) \
+     || (echo "Must be on master branch for command to work" && return 1)
+
+}
+
+function gitrmmerged {
+    onmaster \
+        && (git branch -r --merged | grep -v master | sed 's/origin\///' | xargs -n 1 git push --delete origin) \
+        || (echo "Must be on master branch for command to work" && return 1)
+}
+
+function buildlibs {
+    for i in aerolibutil simulink simulink_extras
+    do
+        ~/qvtrace/cli --library ~/tmp/blocklibs/orig/$i.mdl > ~/qvtrace/resources/blocklibs/$i.qmt
+    done
+}
+
+export JAVA_HOME=/usr/lib/jvm/default-java
+export NODE_PATH="/usr/local/lib/node_modules"
+export DESKTOP_IP=10.10.42.132
+export DESKTOP=wolfe@${DESKTOP_IP}
+
+# MetiTarski environment variables
+export Z3_NONLIN=/usr/bin/z3
+export METITARSKI=/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64
+export TPTP=/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64/tptp
+export PATH=$PATH:/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64
+
+function deobfuscate {
+    ~/proguard5.3.2/bin/retrace.sh ~/qvtrace/target/proguard_map.txt $*
+}
+
+function check_ip {
+    MY_IP=`hostname -I | xargs -n 1 | grep 10.10`  # Using xargs just to trim whitespace
+    if [[ ${MY_IP} != ${DESKTOP_IP} ]] ; then echo "Expected ip ${DESKTOP_IP}; Actual ip ${MY_IP}"; fi
+}
+
+function renew_dhcp {
+    echo ip before: `hostname -I`
+    sudo dhclient -r ; sudo dhclient
+    echo ip after: `hostname -I`
+}
+
+export RLM_LICENSE=~/qvtrace/resources/rlm-ez/qvt.lic

@@ -161,6 +161,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; QRA
-  (add-to-list 'load-path "~/emacs/matlab-emacs-src")
-  (load-library "matlab-load")
+(add-to-list 'load-path "~/emacs/matlab-emacs-src")
+;; (load-library "matlab-load")
 (put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
+(setq inhibit-startup-screen t)

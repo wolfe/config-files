@@ -1,17 +1,21 @@
 [user]
-	name = David Wolfe
-	email = davidgameswolfe@gmail.com
+  name = David Wolfe
+  email = davidgameswolfe@gmail.com
 [push]
-	default = matching
-[color]
-	branch = auto
-	diff = auto
-	interactive = auto
-	status = auto
+  default = simple
 [alias]
-   l = log --pretty=format:'%h %ci %s (%an)'
-   lol = log --graph --decorate --pretty=oneline --abbrev-commit 
-   lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
-   standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author Karl-L
+  l = log --pretty=format:'%h %Cgreen%ai%Creset %s (%an)'
+  refl = reflog --pretty=format:'%h %Cgreen%ai%Creset %gd %s'
+  graph = log --graph --decorate --pretty=oneline --abbrev-commit
+  teamweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '8 days ago' --date=short
+  week = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '8 days ago' --author wolfe --date=short
+  month = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '1 month ago' --author wolfe --date=short
+  mikeweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '8 days ago' --author mike --date=short
+  day = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '1 day ago' --author wolfe --date=short
+  twoweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '2 weeks ago' --author wolfe --date=short
 [core]
-       excludesfile = ~/.gitignore_global
+  excludesfile = ~/.gitignore_global
+[difftool]
+  prompt = false
+[diff]
+  tool = meld
