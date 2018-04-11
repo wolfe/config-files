@@ -118,9 +118,10 @@ alias ppt="ooimpress"
 
 if [[ "$OSTYPE" == *"linux"* ]] ; then
     function open {
-        for i in $*; do xdg-open $i; done
+        for i in $*; do xdg-open "$i"; done
     }
 fi
+
 ################################################################
 
 ################################################################
@@ -880,7 +881,7 @@ function b {
     cat /tmp/b | awk -v N=3 '{print $N}' | sort | uniq -c | sort > /tmp/d
 }
 
-alias checkstyle='java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOME/qvtrace/resources/qra_checks.xml'
+alias xxcheckstyle='java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOME/qvtrace/resources/qra_checks.xml'
 
 function checkstyles {
     # Run checkstyles on only those files which are committed which differ from origin/master
@@ -979,14 +980,15 @@ function buildlibs {
 
 export JAVA_HOME=/usr/lib/jvm/default-java
 export NODE_PATH="/usr/local/lib/node_modules"
-export DESKTOP_IP=10.10.42.132
-export DESKTOP=wolfe@${DESKTOP_IP}
 
 # MetiTarski environment variables
 export Z3_NONLIN=/usr/bin/z3
 export METITARSKI=/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64
 export TPTP=/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64/tptp
 export PATH=$PATH:/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64
+
+export DESKTOP_IP=10.10.42.132  # Often 10.10.42.115
+export DESKTOP=wolfe@${DESKTOP_IP}
 
 function deobfuscate {
     ~/proguard5.3.2/bin/retrace.sh ~/qvtrace/target/proguard_map.txt $*
@@ -1004,3 +1006,14 @@ function renew_dhcp {
 }
 
 export RLM_LICENSE=~/qvtrace/resources/rlm-ez/qvt.lic
+
+function r1 {
+    cd ~/qvtrace && \
+    mvn clean && \
+    rm -rf ~/.m2/repository/org/conqat/lib/simulink/simulink/* && \
+    cd ~/qvtrace/dependencies/simulink && \
+    ant clean compile && \
+    cd ~/qvtrace/dependencies && \
+    ./installJars && \
+    cd ~/qvtrace
+}

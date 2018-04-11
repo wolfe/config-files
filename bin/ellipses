@@ -12,7 +12,5 @@ def truncate_middle(s, n):
     n_1 = n - n_2 - 3
     return '{0}...{1}'.format(s[:n_1], s[-n_2:])
 
-
-
 for line in fileinput.input():
-    print truncate_middle(line.strip(), 80)
+    print truncate_middle(line.rstrip(), 80)
