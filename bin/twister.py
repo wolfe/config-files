@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 from random import choice
 from time import sleep
 from subprocess import call

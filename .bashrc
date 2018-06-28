@@ -106,7 +106,7 @@ alias lookup="cat ~/Dropbox/notes/address/* | grep -i"
 alias grep="grep -s"
 alias egrep="egrep -s"
 alias fgrep="fgrep -s"
-alias ssh="ssh -x"
+alias ssh="ssh -X"
 alias from='grep ^From: $MAIL'
 if [ $HOST == Micah ]
 then
@@ -250,10 +250,10 @@ function swap {
 }
 export -f swap
 
-alias rsynccommand='rsync -CrlpgoDuzb --exclude "*~"'
+alias rsynccommand='rsync -Crlpuz --exclude "*~"'
 function rsyncbase {
   HOMEDIR=~/
-  RHOME=wolfe@dan.mcs.gac.edu
+  RHOME=qvtrace@simulink0
   PWD=`pwd`/
   RDIR=`echo $PWD | sed s%$HOMEDIR%${RHOME}:%`
 export -f rsyncbase
@@ -549,12 +549,12 @@ function bundle {
 	echo "# To unbundle, sh this file"
 	for i in $*
 	do
-		echo "cat >"$i" <<'//GO.SYSIN DD *'"
+		echo "cat >"$i" <<'GO.SYSIN DD *'"
 		cat $i
         if [ `tail -1 $i | wc -l` = 0 ] # file ends in no newline
         then echo ; echo "Appended newline to file $i" > /dev/stderr
         fi
-		echo "//GO.SYSIN DD *"
+		echo "GO.SYSIN DD *"
 	done
 }
 
@@ -885,7 +885,6 @@ alias xxcheckstyle='java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOM
 
 function checkstyles {
     # Run checkstyles on only those files which are committed which differ from origin/master
-    cd ~/qvtrace
     git fetch origin master
     java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOME/qvtrace/resources/qra_checks.xml checkstyle `git diff --name-only origin/master..HEAD | grep "java$"`
 }
@@ -974,7 +973,7 @@ function gitrmmerged {
 function buildlibs {
     for i in aerolibutil simulink simulink_extras
     do
-        ~/qvtrace/cli --library ~/tmp/blocklibs/orig/$i.mdl > ~/qvtrace/resources/blocklibs/$i.qmt
+        ~/qvtrace/cli --library ~/tmp/blocklibs/$i.slx > ~/qvtrace/resources/blocklibs/$i.qmt
     done
 }
 
@@ -987,7 +986,7 @@ export METITARSKI=/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64
 export TPTP=/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64/tptp
 export PATH=$PATH:/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64
 
-export DESKTOP_IP=10.10.42.132  # Often 10.10.42.115
+export DESKTOP_IP=10.10.42.90
 export DESKTOP=wolfe@${DESKTOP_IP}
 
 function deobfuscate {
