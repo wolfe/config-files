@@ -261,14 +261,12 @@ export -f rsyncbase
 
 function put {
   rsyncbase
-#  rsync -Cavuzb --exclude "*~" . $RDIR # put
   rsynccommand . $RDIR # put
 }
 export -f put
 
 function get {
   rsyncbase
-#  rsync -avuzb --exclude "*~" $RDIR . # get
   rsynccommand $RDIR . # get
 }
 export -f get
@@ -460,10 +458,10 @@ function rgrep {
         if [ -d "$arg" ]; then DIR="$arg";
         elif [[ $arg == -* ]]; then ARGS=" ${ARGS} ${arg}"
         elif [[ "$SEARCH" == "" ]]; then SEARCH="$arg"
-        else PATTERN=$arg
+        else PATTERN="$arg"
         fi
     done
-    grep -r $SEARCH $ARGS $DIR --include=$PATTERN | cut -c -240 ;
+    grep -r "$SEARCH" "$ARGS" "$DIR" --include="$PATTERN" | cut -c -240 ;
 }
 
 function rmsvns { find . -name '.svn' -prune -exec rm -r -f {} \; ; }
@@ -592,14 +590,10 @@ function cucns-getdb {
   scp cucns@cuzone.ca:dbdumps/latest_dump.tar.gz .
   tar xfz latest_dump.tar.gz
 }
-alias mom="ssh dwolfe@bas.homelinux.com -p 3333"
-alias momexec="ssh hcxmom@bas.homelinux.com -p 3333 "
-alias mom7="ssh sheepdog@bas.homelinux.com -p 26"
-export cucns=cucns@204.244.124.128
 
 export WORKON_HOME=$HOME/envs
 export VIRTUALENVWRAPPER_PYTHON=`which python2.7`
-source_if_exists source /usr/local/bin/virtualenvwrapper.sh
+source_if_exists /usr/local/bin/virtualenvwrapper.sh
 alias iwk-env="source ~/envs/iwk/bin/activate"
 alias milely-env="source ~/envs/milely/bin/activate"
 alias env="echo Use w instead of env"
@@ -881,37 +875,15 @@ function b {
     cat /tmp/b | awk -v N=3 '{print $N}' | sort | uniq -c | sort > /tmp/d
 }
 
-alias xxcheckstyle='java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOME/qvtrace/resources/qra_checks.xml'
-
-function checkstyles {
-    # Run checkstyles on only those files which are committed which differ from origin/master
-    git fetch origin master
-    java -jar $HOME/qvtrace/resources/checkstyle-all.jar -c $HOME/qvtrace/resources/qra_checks.xml checkstyle `git diff --name-only origin/master..HEAD | grep "java$"`
-}
-
 function countbugs {
     FINDBUGS=target/findbugsXml.xml
-    TMP=/tmp/findbugsXml.xml.tmp
-    LAST=/tmp/lastbugs.xml
+    OUTPUT=/tmp/countbugs.xml
     BUG=' <BugInstance'
     cd ~/qvtrace
-
     mvn -Dmaven.javadoc.skip=true site
-    xml_pp target/findbugsXml.xml > /tmp/findbugsXml.xml
-    /bin/mv /tmp/findbugsXml.xml target/findbugsXml.xml
+    xml_pp ${FINDBUGS} > ${OUTPUT}
     current=`cat ${FINDBUGS} | grep "${BUG}"  | wc -l`
-    if [ ! -f ${LAST} ]; then
-        /bin/cp ${FINDBUGS} ${LAST}
-    else
-        previous=`cat ${LAST} | grep "${BUG}" | wc -l`
-        new=$(($current - $previous))
-        if [ $current -lt $previous ]; then /bin/cp ${FINDBUGS} ${LAST}; fi
-        if [ $current -gt $previous ]; then
-            echo "New Findbugs --- you should run"
-            echo "   diff ${LAST} ${FINDBUGS}"
-        fi
-    fi
-    echo "$current total findbugs, change of $new since last new low."
+    echo "$current total findbugs.  See ${OUTPUT}"
 }
 
 function sim1 {
@@ -971,9 +943,9 @@ function gitrmmerged {
 }
 
 function buildlibs {
-    for i in aerolibutil simulink simulink_extras
+    for i in ~/david/blocklibs/*.mdl
     do
-        ~/qvtrace/cli --library ~/tmp/blocklibs/$i.slx > ~/qvtrace/resources/blocklibs/$i.qmt
+        qvtrace -L $i > ~/qvtrace/resources/blocklibs/$(basename $i .mdl).qmt
     done
 }
 
@@ -989,19 +961,31 @@ export PATH=$PATH:/home/wolfe/qvtrace/resources/metit-dist-new/Linux-x86_64
 export DESKTOP_IP=10.10.42.90
 export DESKTOP=wolfe@${DESKTOP_IP}
 
+export PATH=$PATH:$HOME/qvtrace/bin
+
 function deobfuscate {
     ~/proguard5.3.2/bin/retrace.sh ~/qvtrace/target/proguard_map.txt $*
 }
 
+function my-ip {
+    hostname -I | xargs -n 1 | grep 10.10  # Using xargs just to trim whitespace
+}
+
 function check_ip {
-    MY_IP=`hostname -I | xargs -n 1 | grep 10.10`  # Using xargs just to trim whitespace
+    MY_IP=`my-ip`
     if [[ ${MY_IP} != ${DESKTOP_IP} ]] ; then echo "Expected ip ${DESKTOP_IP}; Actual ip ${MY_IP}"; fi
 }
 
 function renew_dhcp {
-    echo ip before: `hostname -I`
+    echo "================================================================ BEFORE"
+    dig jira.internal.qracorp.com
+    nslookup jira.internal.qracorp.com
+    hostname -I
+    echo "================================================================ AFTER"
     sudo dhclient -r ; sudo dhclient
-    echo ip after: `hostname -I`
+    dig jira.internal.qracorp.com
+    nslookup jira.internal.qracorp.com
+    hostname -I
 }
 
 export RLM_LICENSE=~/qvtrace/resources/rlm-ez/qvt.lic
@@ -1016,3 +1000,28 @@ function r1 {
     ./installJars && \
     cd ~/qvtrace
 }
+
+alias sortlog='sort --field-separator=# --key=2 -g -s'
+export PATH=~/.local/bin:$PATH  # Used by pip install
+
+alias dockssh="docker exec -it qvtrace /bin/bash"
+alias dockroot="docker exec -u root -it qvtrace /bin/bash"
+function doit {
+    cd ~/qvtrace/build/deployment
+    git add .
+    git commit -m fixup
+    ./buildInstance -c `git rev-parse HEAD` && dockit ./selfExtractingInstaller/payload/instance.tar
+}
+
+function dodo {
+    CONTAINER_NAME=qvtrace
+    ROOT=$HOME/qvtrace
+    dockit $ROOT/build/deployment/selfExtractingInstaller/payload/instance.tar
+    docker exec $CONTAINER_NAME mkdir -p /home/qvtrace/.qvtrace-license
+    docker cp $ROOT/resources/rlm-ez/qvt_future.lic $CONTAINER_NAME:/home/qvtrace/.qvtrace-license/qvt.lic
+    ~/qvtrace/build/jenkins/waitForResponse http://localhost:2998
+    test-ui --baseUrl http://localhost:2998 wireHover
+}
+# On docker machine:
+# docker cp qvtrace:/home/qvtrace/qvtrace/resources/apache-tomcat-7.0.73/temp/qvtrace .
+# docker cp qvtrace:/home/qvtrace/qvtrace/resources/apache-tomcat-7.0.73/logs .

@@ -1,3 +1,8 @@
 *~
 .settings
 bun
+
+# qvscribe
+logs
+.factorypath
+.vscode

@@ -45,21 +45,9 @@
               tab-width 4)
 (setq-default js-indent-level 4)
 (setq-default coffee-tab-width 4)
-(add-hook 'php-mode-hook (lambda ()
-                           (c-set-style "php-wolfe")))
 
-(c-add-style "php-wolfe" ;; Type C-c C-s when a brace is on its own line
-             '("bsd"
-;;			   (c-hanging-braces-alist . '((defun-open after))) 
-			   (c-hanging-braces-alist
-				((substatement-open)
-				 (block-close . c-snug-do-while)
-				 (extern-lang-open after)
-				 (inexpr-class-open after)
-				 (defun-open after)
-				 (inexpr-class-close before)))
-               (c-basic-offset . 4)
-			   (tab-width . 4)))
+(when (file-directory-p "~/emacs/php-mode")
+  (load "~/emacs/php-mode/php-mode-autoloads.el"))
 
 ;;===== PyFlakes
 ;; code checking via pyflakes+flymake

@@ -4,18 +4,23 @@
 [push]
   default = simple
 [alias]
-  l = log --pretty=format:'%h %Cgreen%ai%Creset %s (%an)'
+  l = log --date=format:'%Y-%m-%d %H:%M' --pretty=format:'%h %Cgreen%ad%Creset %s (%an)'
+  s = log --date=short --pretty=format:'%h %ad %<(12,trunc)%an %<(120,trunc)%s' --no-merges
   refl = reflog --pretty=format:'%h %Cgreen%ai%Creset %gd %s'
   graph = log --graph --decorate --pretty=oneline --abbrev-commit
-  teamweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '8 days ago' --date=short
-  week = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '8 days ago' --author wolfe --date=short
-  month = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '1 month ago' --author wolfe --date=short
-  mikeweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '8 days ago' --author mike --date=short
-  day = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '1 day ago' --author wolfe --date=short
-  twoweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '2 weeks ago' --author wolfe --date=short
+  teamweek = log --pretty=format:'%h %Cgreen%ad%Creset %s (%an)' --since '8 days ago' --date=short
+  teamtwoweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '15 days ago' --date=short
+  week = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '8 days ago' --author david --date=short
+  month = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '1 month ago' --author david --date=short
+  day = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '1 day ago' --author david --date=short
+  twoweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '2 weeks ago' --author david --date=short
+  difflog = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+  c = log --oneline --left-right --graph
 [core]
   excludesfile = ~/.gitignore_global
 [difftool]
   prompt = false
 [diff]
   tool = meld
+[tag]
+	sort = version:refname

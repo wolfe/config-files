@@ -2,6 +2,7 @@
 
 from datetime import date, timedelta as td
 from collections import defaultdict
+from fractions import Fraction as F
 
 d1 = date(2000, 1, 1)
 d2 = date(2400, 1, 1)
@@ -24,11 +25,12 @@ for i in range(delta.days):
         dates[d.day] += 1
 
 def tabulate(a):
+    total = sum([j for i, j in a.items()])
     print "==================="
     b = [(j, i) for i, j in a.items()]
     b.sort()
     for pair in b:
-        print pair[0], pair[1]
+        print pair[0], "/", total, F(pair[0], total), pair[1]
 
 print "There are %d days in 400 years, which equals %d mod 7." % (count, count%7)
 tabulate(weekdays)
