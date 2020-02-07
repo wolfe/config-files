@@ -1,0 +1,51 @@
+#!/usr/bin/python
+from collections import defaultdict
+
+
+def letters(word):
+    return ''.join(sorted(list(set(word))))
+
+def ok(line):
+    if len(line) < 4:
+        return False
+    s = set(line)
+    n = len(letters(line))
+    return n <= 5
+
+def build_dict():
+    f = open('/home/wolfe/Dropbox/wolfe/notes/OWL2', 'r')
+    worddict = defaultdict(list)
+    for line in f:
+        line = line.strip()
+        if ok(line):
+            worddict[letters(line)].append(line)
+    return worddict
+
+def score(word):
+    n = len(word)
+    if n < 4: return 0
+    elif n == 4: return 1
+    else: return n
+
+def total_score(words):
+    return sum([score(word) for word in words])
+
+def count_letters():
+    f = open('/home/wolfe/Dropbox/wolfe/notes/OWL2', 'r')
+    ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    d = {c : 0 for c in ALPHABET}
+    for line in f:
+        line = line.strip()
+        for c in line:
+            d[c] += 1
+    total = sum([d[c] for c in ALPHABET])
+    for k in sorted(d, key=lambda k: (d[k]), reverse=False):
+        print k, d[k], 1.0 * d[k] / total
+
+def doit():
+    d = build_dict()
+    for k in sorted(d, key=lambda k: total_score(d[k]), reverse=False):
+        print(total_score(d[k]), k, d[k])
+
+# doit()
+count_letters()
