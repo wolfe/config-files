@@ -148,6 +148,10 @@
 ;; END C++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(autoload 'groovy-mode "groovy-mode" "Groovy Mode" t)
+(add-to-list 'auto-mode-alist '("\\.gradle" . groovy-mode))
+(add-to-list 'auto-mode-alist '("Jenkinsfile" . groovy-mode))
+
 ;; QRA
 (add-to-list 'load-path "~/emacs/matlab-emacs-src")
 ;; (load-library "matlab-load")
