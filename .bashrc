@@ -1003,6 +1003,7 @@ function r1 {
 
 alias sortlog='sort --field-separator=# --key=2 -g -s'
 export PATH=~/.local/bin:$PATH  # Used by pip install
+export PATH=$PATH:/opt/gradle/gradle-6.1.1/bin
 
 alias dockssh="docker exec -it qvtrace /bin/bash"
 alias dockroot="docker exec -u root -it qvtrace /bin/bash"
