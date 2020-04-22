@@ -931,15 +931,16 @@ function onmaster {
 
 function gitlsmerged {
     onmaster \
-     && (git branch -r --merged | grep -v master | sed 's/origin\///' | xargs -n 1 echo) \
-     || (echo "Must be on master branch for command to work" && return 1)
-
+    && (git branch -r --merged | egrep -v 'master|release-' | sed 's/origin\///' | xargs -n 1 echo) \
+    && echo "- release branches -" \
+    && (git branch -r --merged | grep 'release-' | sed 's/origin\///' | xargs -n 1 echo) \
+    || (echo "Must be on master branch for command to work" && return 1)
 }
 
 function gitrmmerged {
     onmaster \
-        && (git branch -r --merged | grep -v master | sed 's/origin\///' | xargs -n 1 git push --delete origin) \
-        || (echo "Must be on master branch for command to work" && return 1)
+    && (git branch -r --merged | egrep -v 'master|release-' | sed 's/origin\///' | xargs -n 1 git push --delete origin) \
+    || (echo "Must be on master branch for command to work" && return 1)
 }
 
 function buildlibs {
@@ -1004,6 +1005,7 @@ function r1 {
 alias sortlog='sort --field-separator=# --key=2 -g -s'
 export PATH=~/.local/bin:$PATH  # Used by pip install
 export PATH=$PATH:/opt/gradle/gradle-6.1.1/bin
+alias gradle=./gradlew
 
 alias dockssh="docker exec -it qvtrace /bin/bash"
 alias dockroot="docker exec -u root -it qvtrace /bin/bash"

@@ -148,9 +148,10 @@
 ;; END C++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(autoload 'groovy-mode "groovy-mode" "Groovy Mode" t)
-(add-to-list 'auto-mode-alist '("\\.gradle" . groovy-mode))
-(add-to-list 'auto-mode-alist '("Jenkinsfile" . groovy-mode))
+(require 'package)
+(add-to-list 'package-archives ;; Supplies groovy-mode
+             '("melpa-stable" . "https://melpa.org/packages/") t)
+(package-initialize)
 
 ;; QRA
 (add-to-list 'load-path "~/emacs/matlab-emacs-src")
@@ -158,3 +159,16 @@
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
 (setq inhibit-startup-screen t)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages (quote (groovy-mode)))
+ '(safe-local-variable-values (quote ((js-indent-level . 2)))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
