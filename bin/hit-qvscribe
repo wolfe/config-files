@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+# mkvirtualenv --python=/usr/bin/python3 qvscribe
+# pip install requests
+
+import unittest
+import requests
+
+ROOT_URI='http://localhost:8744/QvsCore/v1/AnalyzedRequirementService'
+AUTH=requests.auth.HTTPBasicAuth('qvsanalyzer', 'blockinterestdecimalmove')
+
+class TestPing(unittest.TestCase):
+    def test_ping(self):
+        response = requests.get('%s/ping' % ROOT_URI, auth=AUTH)
+        self.assertTrue(response.ok)
+
+    def test_bad_ping(self):
+        response = requests.get('%s/ping' % ROOT_URI)
+        self.assertTrue(response.ok)
+
+if __name__ == '__main__':
+    unittest.main()

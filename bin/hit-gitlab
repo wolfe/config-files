@@ -1,0 +1,78 @@
+#!/usr/bin/env groovy
+
+/****************************************************************
+* Ignore https cert stuff
+*****************************************************************/
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+def nullTrustManager = [
+    checkClientTrusted: { chain, authType ->  },
+    checkServerTrusted: { chain, authType ->  },
+    getAcceptedIssuers: { null }
+]
+
+def nullHostnameVerifier = [
+    verify: { hostname, session -> true }
+]
+
+SSLContext sc = SSLContext.getInstance("SSL")
+sc.init(null, [nullTrustManager as X509TrustManager] as TrustManager[], null)
+HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory())
+HttpsURLConnection.setDefaultHostnameVerifier(nullHostnameVerifier as HostnameVerifier)
+/*******************************************************************/
+
+GIT_SERVER="10.10.42.11"
+GITLAB_TOKEN='djsovjPwDwaznzqrqM6y'
+PROJECT_ID='64'
+BRANCH_NAME='david-jenkins-reacts-on-merge'
+BASE_URL="https://${GIT_SERVER}/api/v4/projects/${PROJECT_ID}/merge_requests"
+USER='jenkins'
+EMOJI=[
+    'launched': 'white_circle',
+    'style': 'black_circle',
+    'fail': 'red_circle',
+    'success': 'large_blue_circle',
+]
+
+def get_url(path, query) {
+    return new URL("${BASE_URL}/${path}?private_token=${GITLAB_TOKEN}&${query}")
+}
+
+def get(path, query) {
+    def url = get_url(path, query)
+    def requests = new groovy.json.JsonSlurper().parse(url.newReader())
+    return requests
+}
+
+def post(path, query) {
+    def req = get_url(path, query).openConnection()
+    req.setRequestMethod("POST")
+    return req.getResponseCode()
+}
+
+def delete(path, query) {
+    def req = get_url(path, query).openConnection()
+    req.setRequestMethod("DELETE")
+    return req.getResponseCode()
+}
+
+def award_emoji(name) {
+    branches = get("", "state=opened&source_branch=${BRANCH_NAME}")
+    if (branches.size() == 0) {
+        return;
+    }
+    def iid = branches[0].iid
+    for (x in get("/${iid}/award_emoji", "")) {
+        if (x.user.username == "${USER}") {
+            delete("/${iid}/award_emoji/${x.id}", "")
+        }
+    }
+    println "Awarding emoji ${name}: " + post("/${iid}/award_emoji", "name=${name}")
+}
+
+award_emoji(EMOJI.success)

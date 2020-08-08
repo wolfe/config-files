@@ -1028,3 +1028,9 @@ function dodo {
 # On docker machine:
 # docker cp qvtrace:/home/qvtrace/qvtrace/resources/apache-tomcat-7.0.73/temp/qvtrace .
 # docker cp qvtrace:/home/qvtrace/qvtrace/resources/apache-tomcat-7.0.73/logs .
+
+function patch {
+    cd ~/qvscribe/qts/server
+    sed -i s/10.10.42.21:/localhost:/g pom.xml
+    sed -i s/10.10.42.21:/localhost:/g src/main/resources/application-prod.properties
+}

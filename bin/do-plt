@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+set -x
+
+cd ~/qvscribe-new
+git checkout master
+git push origin master -f
+for branch in david-test-merge david-test-no-merge david-test-qts-change; do
+  git checkout $branch
+  git reset --hard master
+  if [[ $branch == 'david-test-qts-change' ]]; then
+      echo junk > qts/README
+  else
+      echo junk > README
+  fi
+  git add .
+  git commit -m 'junk commit'
+  git push origin $branch -f
+done
+  git checkout master
