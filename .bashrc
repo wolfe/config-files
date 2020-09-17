@@ -1034,3 +1034,6 @@ function patch {
     sed -i s/10.10.42.21:/localhost:/g pom.xml
     sed -i s/10.10.42.21:/localhost:/g src/main/resources/application-prod.properties
 }
+
+export AWS_PROFILE=olddev
+
