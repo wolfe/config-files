@@ -89,7 +89,7 @@ alias ssh="ssh -X"
 
 if [[ "$OSTYPE" == *"linux"* ]] ; then
     function open {
-        for i in $*; do xdg-open "$i"; done
+        for i in "$@"; do xdg-open "$i"; done
     }
 fi
 
@@ -370,6 +370,7 @@ function check-ip {
 }
 
 export PATH=~/.local/bin:$PATH  # Used by pip install
-
-export AWS_PROFILE=olddev
-
+export PATH=~/prime/bin:$PATH  # AnalyzeRE
+export AWS_PROFILE=dev
+alias saml_login="saml2aws login -r us-east-2 -a"
+export PRIME_PROVISIONING_API_URL=https://graphene-ohio-development-us-east-2-provisioning-api.analyzere.net

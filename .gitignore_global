@@ -9,3 +9,6 @@ logs
 david
 c:
 ${sys:log_dir}
+
+/bin
+
