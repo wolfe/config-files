@@ -3,59 +3,13 @@
 
 [[ -s $HOME/.aws_credentials ]] && source $HOME/.aws_credentials
 
-export USERNAME=wolfe
-export CAMPUSIP="wolfe@138.236.64.77"
-export CAMPUS="wolfe@baal.gac.edu"
-export w=$CAMPUS
-export HOST=`hostname | sed 's/\..*//'`
 export GWT_HOME=/usr/local/gwt
-
-if [ `hostname` == 'qvtrace' ]; then
-    export PRINTER=RICOH-RICOH-Aficio-SP-3510SF
-elif [ `hostname` == 'nash' ]; then
-    export PRINTER=QRA
-fi
 export LPDEST=$PRINTER
-
-alias pg_dump="pg_dump --no-tablespaces --no-owner"
-alias skey='eval `/usr/bin/ssh-agent` ; ssh-add ~/.ssh/id_rsa'
-
-################################################################
-# Generic bash meta-functions
-################################################################
-# copies function named $1 to name $2
-# Syntax: prepend_to_function <name> [statements...]
-function prepend_to_function()
-{
-    local name=$1
-    shift
-    local body="$@"
-    eval "$(echo "${name}(){"; echo ${body}; declare -f ${name} | tail -n +3)"
-}
-# Syntax: append_to_function <name> [statements...]
-function append_to_function()
-{
-    local name=$1
-    shift
-    local body="$@"
-    eval "$(declare -f ${name} | head -n -1; echo ${body}; echo '}')"
-}
-function copy_function() {
-    declare -F $1 > /dev/null || return 1
-    eval "$(echo "${2}()"; declare -f ${1} | tail -n +2)"
-}
 
 ################################################################
 # GIT
 ################################################################
-# Shows the [branch], and an * if there are uncommitted changes. Example:
-# ~/projects/my_project[master*]:
-# export PATH=/usr/local/git/bin:$PATH
-export PATH=$HOME/bin:$PATH
-export PATH=/usr/local/sbin:$PATH
-export PATH=/usr/local/bin:$PATH
-alias gitl='git log --pretty=format:"%h - %an, %aD : %s"'
-alias her=heroku
+
 function parse_git_dirty {
   [[ $(git status 2> /dev/null | tail -n1) != *"nothing to commit"* ]] && echo "*"
 }
@@ -67,20 +21,12 @@ PS1='\w$(parse_git_branch): '
 # PS1="$HOST> "
 PS2=">> "
 
-
-# date=`/bin/date`
-# day="${date:0:3}, ${date:4:6}, ${date:24:4}"
-
 ################################################################
 # ALIASES
 ################################################################
-alias e=emacs
-alias gdb="gdb -q"
-alias t=less
 alias cp="cp -i"
 alias mv="mv -i"
 alias ls="ls -F"  # -C
-alias l="ls -A"
 alias lookup="cat ~/Dropbox/notes/address/* | grep -i"
 alias grep="grep -s"
 alias egrep="egrep -s"
@@ -105,17 +51,6 @@ export VISUAL=$EDITOR
 # bind 'set show-all-if-ambiguous on'		# Tab once for complete
 
 ulimit -c 0 # Maximum core file size
-
-# PATH
-export MANPATH=~/man:$MANPATH
-for i in ~/bin/*
-do
-if [ -d "$i" ]
-    then
-    PATH=$i:$PATH
-fi
-done
-export PATH
 
 # CDPATH
 for i in ~/*
@@ -171,14 +106,6 @@ function lp {
 }
 export -f lp
 
-function jpgdate {
-    for i in $*
-      do
-      echo $i `awk -f ~/www-docs/pics/getdate.awk $i`
-      done
-}
-export -f jpgdate
-
 function swap {
   # Check that the user provides exactly two arguments, and that files exist
   if [ $# != 2 ]; then echo Enter exactly two arguments; return 1; fi
@@ -197,7 +124,6 @@ function rsyncbase {
   RHOME=qvtrace@simulink0
   PWD=`pwd`/
   RDIR=`echo $PWD | sed s%$HOMEDIR%${RHOME}:%`
-export -f rsyncbase
 }
 
 function put {
@@ -220,18 +146,6 @@ function sync {
 }
 export -f sync
 
-function backup {
-  cp -r . ~/tmp/`pwd | sed s%.*/%%`-`date '+%Y-%m-%d'`
-}
-export -f backup
-
-function oldrgrep {
-    PATTERN="${@: -1}"
-    ARGS="${@:1:$(($#-1))}"
-    grep -r $ARGS . --include=$PATTERN | cut -c -240 ;
-    echo grep -r $ARGS . --include=$PATTERN
-}
-
 function rgrep {
     DIR="."
     ARGS=""
@@ -246,10 +160,6 @@ function rgrep {
     done
     grep -r "$SEARCH" "$ARGS" "$DIR" --include="$PATTERN" | cut -c -240 ;
 }
-
-function rmsvns { find . -name '.svn' -prune -exec rm -r -f {} \; ; }
-function rmpycs { find . -name '*.pyc' -exec rm -f {} \; ; }
-function rmgits { find . -name '.git*' -prune -exec rm -r -f {} \; ; }
 
 function rpass {
   MATRIX="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -295,24 +205,6 @@ function shout {
 
 function markdown {
     pandoc --from markdown --to html $*
-}
-
-function disable_account {
-  sudo dscl . -create /Users/$* UserShell /usr/bin/false
-}
-function enable_account {
-  sudo dscl . -create /Users/$* UserShell /bin/bash
-}
-
-function disable_kids {
-  disable_account guest
-  disable_account lila
-  disable_account tovia
-}
-function enable_kids {
-  enable_account guest
-  enable_account lila
-  enable_account tovia
 }
 
 function loopdirs {
