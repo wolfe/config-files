@@ -152,7 +152,7 @@ function rgrep {
     SEARCH=""
     PATTERN="*"
     for arg; do
-        if [ -d "$arg" ]; then DIR="$arg";
+        if [[ -d "$arg" && -e "$SEARCH" ]]; then DIR="$arg";
         elif [[ $arg == -* ]]; then ARGS=" ${ARGS} ${arg}"
         elif [[ "$SEARCH" == "" ]]; then SEARCH="$arg"
         else PATTERN="$arg"
