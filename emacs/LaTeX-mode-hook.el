@@ -1,2 +1,0 @@
-;;(setq spell-filter "detex")
-
