@@ -46,22 +46,8 @@
 (setq-default js-indent-level 4)
 (setq-default coffee-tab-width 4)
 
-(when (file-directory-p "~/emacs/php-mode")
-  (load "~/emacs/php-mode/php-mode-autoloads.el"))
-
 ;;===== PyFlakes
 ;; code checking via pyflakes+flymake
-(when (load "flymake" t)
-  (defun flymake-pyflakes-init ()
-    (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                       'flymake-create-temp-inplace))
-           (local-file (file-relative-name
-                        temp-file
-                        (file-name-directory buffer-file-name))))
-      (list "flake8" (list local-file)))) ;; Need to globally pip install flake8
-  (add-to-list 'flymake-allowed-file-name-masks
-               '("\\.py\\'" flymake-pyflakes-init)))
-
 (require 'zencoding-mode)
 (add-hook 'sgml-mode-hook 'zencoding-mode t) ;; Auto-start on any markup modes
 (add-hook 'html-helper-mode-hook 'zencoding-mode t) ;; Auto-start on any markup modes
