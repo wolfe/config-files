@@ -6,9 +6,8 @@ bun
 logs
 .factorypath
 .vscode
-david
+*david*
 c:
 ${sys:log_dir}
 
 /bin
-
