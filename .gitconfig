@@ -16,6 +16,7 @@
   twoweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '2 weeks ago' --author david --date=short
   difflog = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
   c = log --oneline --left-right --graph
+  showtool = "!showci () { rev=${1:-HEAD}; git difftool $rev~1 $rev; }; showci $1"
 [core]
   excludesfile = ~/.gitignore_global
 [difftool]
