@@ -7,7 +7,7 @@ export GWT_HOME=/usr/local/gwt
 export LPDEST=$PRINTER
 
 ################################################################
-# GIT
+# INCLUDING GIT IN PROMPT
 ################################################################
 
 function parse_git_dirty {
@@ -16,10 +16,11 @@ function parse_git_dirty {
 function parse_git_branch {
   git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/[\1$(parse_git_dirty)]/"
 }
-
-PS1='\w$(parse_git_branch): '
-# PS1="$HOST> "
-PS2=">> "
+function append_to_prompt {
+    tw=$(terraform workspace show)
+    [[ "$tw" == 'default' ]] && echo "$(parse_git_branch)" || echo "<$tw>"
+}
+PS1="\w\$(parse_git_branch): "
 
 ################################################################
 # ALIASES
@@ -32,6 +33,7 @@ alias grep="grep -s"
 alias egrep="egrep -s"
 alias fgrep="fgrep -s"
 alias ssh="ssh -X"
+alias rehash="hash -r"
 
 if [[ "$OSTYPE" == *"linux"* ]] ; then
     function open {
@@ -262,7 +264,7 @@ function check-ip {
 }
 
 export PATH=~/.local/bin:$PATH  # Used by pip install
-export PATH=~/prime/bin:$PATH  # AnalyzeRE
-export AWS_PROFILE=dev
-alias saml_login="saml2aws login -r us-east-2 -a"
-export PRIME_PROVISIONING_API_URL=https://graphene-ohio-development-us-east-2-provisioning-api.analyzere.net
+
+# stty intr ^J  # So I can map ^C to copy
+
+source_if_exists $HOME/analyzere/.bashrc
