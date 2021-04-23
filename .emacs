@@ -5,7 +5,7 @@
   (interactive)
   (require 'package)
 
-  (setq package-list '(use-package guide-key rainbow-mode spaceline auctex reftex pdf-tools helm-bibtex elfeed calfw calfw-ical calfw-org neotree elpy php-mode undo-tree smex auto-complete google-translate org-bullets org-super-agenda magit dash dired-subtree dired-rainbow ranger unfill define-word fuzzy hydra guess-language web-mode symon protobuf-mode))
+  (setq package-list '(use-package guide-key rainbow-mode spaceline auctex reftex pdf-tools helm-bibtex elfeed calfw calfw-ical calfw-org neotree elpy php-mode undo-tree smex auto-complete google-translate org-bullets org-super-agenda magit dash dired-subtree dired-rainbow ranger unfill define-word fuzzy hydra guess-language web-mode symon protobuf-mode google-c-style))
   (setq package-archives '(("melpa-stable" . "https://stable.melpa.org/packages/")
                            ("gnu" . "http://elpa.gnu.org/packages/")
                            ("melpa" . "https://melpa.org/packages/")
@@ -81,3 +81,5 @@
 (setq auto-mode-alist
       (cl-remove-if (lambda (x) (eq (cdr x) 'git-rebase-mode))
                     auto-mode-alist))
+
+(add-hook 'c-mode-common-hook 'google-set-c-style)
