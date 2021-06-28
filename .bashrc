@@ -34,6 +34,7 @@ alias egrep="egrep -s"
 alias fgrep="fgrep -s"
 alias ssh="ssh -X"
 alias rehash="hash -r"
+alias dirs="dirs -v"
 
 if [[ "$OSTYPE" == *"linux"* ]] ; then
     function open {
@@ -230,29 +231,29 @@ function ppjson {
     cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2, sort_keys=True))' | sed 's/[ \t]*$//'
 }
 
-function onmaster {
-    if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]]
-    then
-        return 1
-    fi
-}
-
 function gitlsmerged {
-    onmaster \
-    && (git branch -r --merged | egrep -v 'master|release-' | sed 's/origin\///' | xargs -n 1 echo) \
-    && echo "- release branches -" \
-    && (git branch -r --merged | grep 'release-' | sed 's/origin\///' | xargs -n 1 echo) \
-    || (echo "Must be on master branch for command to work" && return 1)
+    (git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | sed 's/origin\///' | xargs -n 1 echo)
 }
 
 function gitrmmerged {
-    onmaster \
-    && (git branch -r --merged | egrep -v 'master|release-' | sed 's/origin\///' | xargs -n 1 git push --delete origin) \
-    || (echo "Must be on master branch for command to work" && return 1)
+    (git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | sed 's/origin\///' | xargs -n 1 git push --delete origin)
 }
 
 export JAVA_HOME=/usr/lib/jvm/default-java
 export NODE_PATH="/usr/local/lib/node_modules"
+
+docker-remove-containers() {
+    docker stop $(docker ps -aq)
+    docker rm $(docker ps -aq)
+}
+
+docker-armageddon() {
+    docker-remove-containers
+    docker network prune -f
+    docker rmi -f $(docker images --filter dangling=true -qa)
+    docker volume rm $(docker volume ls --filter dangling=true -q)
+    docker rmi -f $(docker images -qa)
+}
 
 function my-ip {
     hostname -I | xargs -n 1 | grep 10.10  # Using xargs just to trim whitespace
