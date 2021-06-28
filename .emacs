@@ -35,6 +35,10 @@
 
 (add-hook 'protobuf-mode-hook (lambda ()
                                 (setq c-basic-offset 2)))
+(add-hook 'json-mode-hook (lambda()
+                            (make-local-variable 'js-indent-level)
+                            (setq js-indent-level 2)))
+
 
 ;;; Prevent extraneous tabs
 (setq-default indent-tabs-mode nil)
