@@ -23,5 +23,6 @@
   prompt = false
 [diff]
   tool = meld
+  submodule = log
 [tag]
 	sort = version:refname
