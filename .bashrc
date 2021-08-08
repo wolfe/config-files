@@ -231,12 +231,16 @@ function ppjson {
     cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2, sort_keys=True))' | sed 's/[ \t]*$//'
 }
 
+function _gitlsmerged_ {
+    git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master|dev|stable|-qa|staging" | sed 's/origin\///'
+}
+
 function gitlsmerged {
-    (git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | sed 's/origin\///' | xargs -n 1 echo)
+    (_gitlsmerged_ | xargs -n 1 echo)
 }
 
 function gitrmmerged {
-    (git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | sed 's/origin\///' | xargs -n 1 git push --delete origin)
+    (_gitlsmerged_ | xargs -n 1 git push --delete origin)
 }
 
 export JAVA_HOME=/usr/lib/jvm/default-java
