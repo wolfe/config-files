@@ -1,3 +1,16 @@
+(defun unquote-string-region (beg end)
+  "Unquote all the \" \n and \t characters in the region"
+  (interactive "r")
+  (save-restriction (narrow-to-region beg end)
+                    (goto-char (point-min))
+                    (while (re-search-forward "\\\\t" nil t) (replace-match "\t"))
+                    (goto-char (point-min))
+                    (while (re-search-forward "\\\\n" nil t) (replace-match "\n"))
+                    (goto-char (point-min))
+                    (while (re-search-forward "\\\\\"" nil t) (replace-match "\""))
+                    ))
+
+
 (defun refresh-emacs-libs ()
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;; THIS METHOD NEEDS TO BE RE-LOADED AND RE-RUN AFTER CHANGES
@@ -5,7 +18,7 @@
   (interactive)
   (require 'package)
 
-  (setq package-list '(use-package guide-key rainbow-mode spaceline auctex reftex pdf-tools helm-bibtex elfeed calfw calfw-ical calfw-org neotree elpy php-mode undo-tree smex auto-complete google-translate org-bullets org-super-agenda magit dash dired-subtree dired-rainbow ranger unfill define-word fuzzy hydra guess-language web-mode symon protobuf-mode google-c-style))
+  (setq package-list '(use-package guide-key rainbow-mode spaceline auctex reftex pdf-tools helm-bibtex elfeed calfw calfw-ical calfw-org neotree elpy php-mode undo-tree smex auto-complete google-translate org-bullets org-super-agenda magit dash dired-subtree dired-rainbow ranger unfill define-word fuzzy hydra guess-language web-mode symon protobuf-mode google-c-style yaml-mode))
   (setq package-archives '(("melpa-stable" . "https://stable.melpa.org/packages/")
                            ("gnu" . "http://elpa.gnu.org/packages/")
                            ("melpa" . "https://melpa.org/packages/")
@@ -31,11 +44,11 @@
                             (set-variable 'fill-column 79)))
 
 (add-hook 'html-mode-hook (lambda()
-                            (setq sgml-basic-offset 4)))
+                            (setq sgml-basic-offset 2)))
 
 (add-hook 'protobuf-mode-hook (lambda ()
                                 (setq c-basic-offset 2)))
-(add-hook 'json-mode-hook (lambda()
+(add-hook 'js-mode-hook (lambda()
                             (make-local-variable 'js-indent-level)
                             (setq js-indent-level 2)))
 
@@ -72,7 +85,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages (quote (protobuf-mode groovy-mode)))
+ '(package-selected-packages
+   (quote
+    (yaml-mode google-c-style symon web-mode guess-language hydra fuzzy define-word unfill ranger dired-rainbow dired-subtree magit org-super-agenda org-bullets google-translate auto-complete smex undo-tree php-mode elpy neotree calfw-org calfw-ical calfw elfeed helm-bibtex pdf-tools auctex spaceline rainbow-mode guide-key use-package protobuf-mode groovy-mode)))
  '(safe-local-variable-values (quote ((js-indent-level . 2)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
