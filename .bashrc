@@ -232,15 +232,19 @@ function ppjson {
 }
 
 function _gitlsmerged_ {
-    git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master|dev|stable|-qa|staging" | sed 's/origin\///'
+    git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master|dev|matisse|main|automated|1.13" | xargs -n 1 echo
 }
 
 function gitlsmerged {
-    (_gitlsmerged_ | xargs -n 1 echo)
+    for var in $(_gitlsmerged_); do
+        echo git push --delete $(cut -d '/' -f 1 <<< "$var") $(cut -d '/' -f 2- <<< "$var")
+    done
 }
 
 function gitrmmerged {
-    (_gitlsmerged_ | xargs -n 1 git push --delete origin)
+    for var in $(_gitlsmerged_); do
+        git push --delete $(cut -d '/' -f 1 <<< "$var") $(cut -d '/' -f 2- <<< "$var")
+    done
 }
 
 export JAVA_HOME=/usr/lib/jvm/default-java
