@@ -7,7 +7,12 @@ logs
 .factorypath
 .vscode
 *david*
-c:
+# c:
 ${sys:log_dir}
 
 /bin
+pyproject.toml
+
+ylt_generator/certs
+
+docs
