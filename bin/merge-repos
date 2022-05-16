@@ -1,66 +1,52 @@
 #!/bin/bash
-set -e
 
-NEW_REPO=$HOME/qvscribe-new
+set -xue -o pipefail
+
+cd $HOME
+NEW_REPO=matisse-new
 TMP_REPO=/tmp/tmp-git-repo
-# We assume repo names have no whitespace
-OLD_REPOS="$(ls -d $HOME/qvscribe/{core,msoffice,qts,pipeline-framework})"
-BINARY_EXTENSIONS="exe|dll|mp4|zip|msi|cab|jar|dep"
-SUBMODULES=git@git.internal.qracorp.com:qvscribe/resources.git
 
 function make_new_repo {
     # Initialize new repository
     rm -rf $NEW_REPO
-    mkdir $NEW_REPO
+    git clone ~/matisse $NEW_REPO
     cd $NEW_REPO
-    git init
-    git remote add origin git@git.internal.qracorp.com:qvscribe/qvscribe.git
+    rm -rf .gitmodules
+    rmdir arium-dashboards reinsurance-standalone adminpanel-starter
+    git add -A .
+    git commit -m 'MERGE-REPOS: Remove git submodules'
+
     # For each repo, clone the repo, move contents to a subdir with same name, then merge into merged repo
-    for repo in $OLD_REPOS; do
-        cd $repo
-        git pull origin master
+    for repo in matisse-frontend matisse-backend; do
+        remote="git@github.com:analyzere/${repo}.git"
         rm -rf $TMP_REPO
-        git clone --branch master $repo $TMP_REPO
+        git clone --branch master $remote $TMP_REPO
         cd $TMP_REPO
-        mkdir TMP_DIR
-        # Using find instead of ls to deal with whitespace in filenames
-        # We want to move all files down one directory, careful to ignore .git, ., .., and dir itself
-        find * .* -prune ! -name .git ! -name . ! -name .. ! -name TMP_DIR \
-             -exec git mv "{}" TMP_DIR \;
-        git mv TMP_DIR $(basename $repo)
-        git commit -m "Moved all files to subdirectory $(basename $repo)"
+        if [ $repo == "matisse-frontend" ]; then
+            git rm -rf apps/cap && git commit -m 'Delete caps app'
+            git filter-repo \
+                --path app/ \
+                --path src/ \
+                --path apps/cap/ \
+                --path UserGuide.pdf \
+                --path data/ \
+                --path src/data/ \
+                --path src/app/lib/d3-v3/d3.v3.min.js \
+                --path src/assets/data/ \
+                --path q \
+                --path yarn.lock \
+                --invert-paths --force
+        elif [ $repo == "matisse-backend" ]; then
+            git filter-repo \
+                --path src/main/java/are/ \
+                --invert-paths --force
+        fi
+        git filter-repo --to-subdirectory-filter $repo
+
         cd $NEW_REPO
         git pull $TMP_REPO master --allow-unrelated-histories --no-edit
     done
-}
-
-function delete_files {
-    # For all files that look like binaries (expecially 3rd party), if
-    # they are no longer in use, delete them from the git history
-    ################################################################
-    # Rewrite all of history, deleting binaries which we no longer
-    # have in our repo
-    ################################################################
-    for repo in $OLD_REPOS; do
-        REPO_LIST="$REPO_LIST|$(basename $repo)"
-    done
-    REPO_LIST="${REPO_LIST:1}"  # Delete leading |
-
-    # the for loop should cycle through new-line separate args instead of space-separated
-    IFS='
-'
-    # Loop through all file objects in the repo and extract filename paths
-    for f in $(git rev-list --objects --all \
-                   | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' \
-                   | sed -n 's/^blob //p' \
-                   | cut -f 3- -d ' '); do
-        # If the file looks like a binary and is no longer used, slate it for deletion
-        # We also ignore filenames with spaces since we are using space as a arg separator
-        # angular/node_modules special cased below... do not double-dip
-        if [[ "$f" =~ (\.($BINARY_EXTENSIONS)$) && ! -f "$f" && ! "$f" =~ " " && ! "$f" =~ "angular/node_modules" ]] ; then
-            echo -n '' $f
-        fi
-    done
+    cd $HOME/matisse-new
 }
 
 function aggressive_gc {
@@ -72,53 +58,7 @@ function aggressive_gc {
     git gc --prune=now
 }
 
-function delete_big_files {
-    # git filter-branch --index-filter "git rm -rf --cached --ignore-unmatch angular/node_modules" HEAD
-    # git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
-    DELETE_FILES=$(delete_files)
-
-    if [[ ! $DELETE_FILES ]]; then
-        echo "NOTHING TO DELETE"
-        return
-    fi
-    git filter-branch --index-filter "git rm -rf --cached --ignore-unmatch $DELETE_FILES angular/node_modules" HEAD
-    aggressive_gc
-}
-
-function add_submodules {
-    git submodule init
-    for sub in $SUBMODULES; do
-        git submodule add $sub
-        git add .
-        git commit -m "Adding submodule $(basename $sub)"
-    done
-}
-
-function david_specific_changes {
-    cp ~/tmp/Jenkinsfile .
-    git add .
-    git commit -m 'Commit Jenkinsfile'
-    git tag combine-checkpoint
-    for branch in david-test-merge david-test-no-merge david-test-qts-change; do
-        git checkout -b $branch
-    done
-    ~/bin/do-plt
-}
-
-function do_it_all {
-    make_new_repo
-    delete_big_files
-    add_submodules
-    david_specific_changes
-}
-
-# for f in $(delete_files); do
-#     echo $f
-# done
-
-
-# delete_files
-# delete_big_files
-# add_submodules
-
-do_it_all
+make_new_repo
+aggressive_gc
+git-big-files
+echo "DISK USAGE: $(du -sh .)"
