@@ -4,12 +4,11 @@ set -xue -o pipefail
 
 cd $HOME
 NEW_REPO=matisse-new
-TMP_REPO=/tmp/tmp-git-repo
 
 function make_new_repo {
     # Initialize new repository
     rm -rf $NEW_REPO
-    git clone ~/matisse $NEW_REPO
+    git clone --branch master ~/matisse $NEW_REPO
     cd $NEW_REPO
     rm -rf .gitmodules
     rmdir arium-dashboards reinsurance-standalone adminpanel-starter
@@ -18,33 +17,38 @@ function make_new_repo {
 
     # For each repo, clone the repo, move contents to a subdir with same name, then merge into merged repo
     for repo in matisse-frontend matisse-backend; do
-        remote="git@github.com:analyzere/${repo}.git"
+        TMP_REPO="/tmp/${repo}"
         rm -rf $TMP_REPO
-        git clone --branch master $remote $TMP_REPO
+        git clone --branch master "git@github.com:analyzere/${repo}.git" $TMP_REPO
         cd $TMP_REPO
         if [ $repo == "matisse-frontend" ]; then
-            git rm -rf apps/cap && git commit -m 'Delete caps app'
+            git remote add charlie git@github.com:cgerrie/matisse-frontend.git
+            git fetch charlie issue-103-new-chart-x-axis-options
+            git branch issue-103-new-chart-x-axis-options charlie/issue-103-new-chart-x-axis-options
+
             git filter-repo \
                 --path app/ \
                 --path src/ \
                 --path apps/cap/ \
                 --path UserGuide.pdf \
                 --path data/ \
-                --path src/data/ \
-                --path src/app/lib/d3-v3/d3.v3.min.js \
-                --path src/assets/data/ \
                 --path q \
                 --path yarn.lock \
                 --invert-paths --force
+            git filter-repo --to-subdirectory-filter $repo
+            cd $NEW_REPO
+            git checkout -b issue-103-new-chart-x-axis-options
+            git pull $TMP_REPO issue-103-new-chart-x-axis-options --allow-unrelated-histories --no-edit
+            git checkout master
+            git pull $TMP_REPO master --allow-unrelated-histories --no-edit
         elif [ $repo == "matisse-backend" ]; then
             git filter-repo \
                 --path src/main/java/are/ \
                 --invert-paths --force
+            git filter-repo --to-subdirectory-filter $repo
+            cd $NEW_REPO
+            git pull $TMP_REPO master --allow-unrelated-histories --no-edit
         fi
-        git filter-repo --to-subdirectory-filter $repo
-
-        cd $NEW_REPO
-        git pull $TMP_REPO master --allow-unrelated-histories --no-edit
     done
     cd $HOME/matisse-new
 }
@@ -52,7 +56,7 @@ function make_new_repo {
 function aggressive_gc {
     # Delete references to the old history
     git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
-    # Flag all deleted objects for garbarage collection
+    # Flag all deleted objects for garbage collection
     git reflog expire --expire=now --all
     # Garbage collect
     git gc --prune=now
