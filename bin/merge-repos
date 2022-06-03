@@ -5,52 +5,70 @@ set -xue -o pipefail
 cd $HOME
 NEW_REPO=matisse-new
 
+function grab_remote {
+    git remote add temp "$1"
+    git fetch temp "$2"
+    git branch "$2" "temp/$2"
+    git remote rm temp
+}
+
+function clone {
+    TMP_REPO="/tmp/${1}"
+    rm -rf $TMP_REPO
+    git clone "git@github.com:analyzere/${1}.git" $TMP_REPO
+    cd $TMP_REPO
+}
+
 function make_new_repo {
     # Initialize new repository
     rm -rf $NEW_REPO
-    git clone --branch master ~/matisse $NEW_REPO
+    mkdir $NEW_REPO
     cd $NEW_REPO
-    rm -rf .gitmodules
-    rmdir arium-dashboards reinsurance-standalone adminpanel-starter
-    git add -A .
-    git commit -m 'MERGE-REPOS: Remove git submodules'
+    git init
 
-    # For each repo, clone the repo, move contents to a subdir with same name, then merge into merged repo
-    for repo in matisse-frontend matisse-backend; do
-        TMP_REPO="/tmp/${repo}"
-        rm -rf $TMP_REPO
-        git clone --branch master "git@github.com:analyzere/${repo}.git" $TMP_REPO
-        cd $TMP_REPO
-        if [ $repo == "matisse-frontend" ]; then
-            git remote add charlie git@github.com:cgerrie/matisse-frontend.git
-            git fetch charlie issue-103-new-chart-x-axis-options
-            git branch issue-103-new-chart-x-axis-options charlie/issue-103-new-chart-x-axis-options
+    clone matisse
+    git filter-repo \
+        --path .gitmodules \
+        --path arium-dashboards \
+        --path reinsurance-standalone \
+        --path adminpanel-starter \
+        --invert-paths --force
 
-            git filter-repo \
-                --path app/ \
-                --path src/ \
-                --path apps/cap/ \
-                --path UserGuide.pdf \
-                --path data/ \
-                --path q \
-                --path yarn.lock \
-                --invert-paths --force
-            git filter-repo --to-subdirectory-filter $repo
-            cd $NEW_REPO
-            git checkout -b issue-103-new-chart-x-axis-options
-            git pull $TMP_REPO issue-103-new-chart-x-axis-options --allow-unrelated-histories --no-edit
-            git checkout master
-            git pull $TMP_REPO master --allow-unrelated-histories --no-edit
-        elif [ $repo == "matisse-backend" ]; then
-            git filter-repo \
-                --path src/main/java/are/ \
-                --invert-paths --force
-            git filter-repo --to-subdirectory-filter $repo
-            cd $NEW_REPO
-            git pull $TMP_REPO master --allow-unrelated-histories --no-edit
-        fi
-    done
-    cd $HOME/matisse-new
+    clone matisse-backend
+    git filter-repo \
+        --path src/main/java/are/ \
+        --invert-paths --force
+    git filter-repo --to-subdirectory-filter matisse-backend
+
+    clone matisse-frontend
+    grab_remote git@github.com:cgerrie/matisse-frontend.git issue-103-new-chart-x-axis-options
+    cp -f package-lock.json /tmp/package-
+    git filter-repo \
+        --path app/ \
+        --path src/ \
+        --path apps/cap/ \
+        --path UserGuide.pdf \
+        --path data/ \
+        --path q \
+        --path yarn.lock \
+        --path package-lock.json \
+        --invert-paths --force
+    git filter-repo --to-subdirectory-filter matisse-frontend
+    cp /tmp/package-lock.json matisse-frontend/
+    git add .
+    git commit -m 'Re-add package-lock.json'
+
+    # Order of pulls matters so, for example, the whole backend in the history of two frontend branches
+    cd $NEW_REPO
+    ARGS="--allow-unrelated-histories --no-edit"
+    git pull /tmp/matisse master $ARGS
+    git pull /tmp/matisse-backend master $ARGS
+    git checkout -b issue-103-new-chart-x-axis-options
+    git pull /tmp/matisse-frontend issue-103-new-chart-x-axis-options $ARGS
+    git checkout master
+    git pull /tmp/matisse-frontend master --allow-unrelated-histories $ARGS
+
+    git remote add github git@github.com:analyzere/matisse-new.git
 }
 
 function aggressive_gc {
