@@ -1,9 +1,13 @@
 #!/bin/bash
 
+# main mistake -- left a few too many branches since `git fork` grabs 'em all
+# might have been nicer to put working branches in a fork somewhere.
+
 set -xue -o pipefail
 
 cd $HOME
 NEW_REPO=matisse-new
+ARGS="--allow-unrelated-histories --no-edit"
 
 function grab_remote {
     git remote add temp "$1"
@@ -11,6 +15,14 @@ function grab_remote {
     git branch "$2" "temp/$2"
     git remote rm temp
 }
+
+function create_branch {
+    git checkout master
+    git checkout -b "$2"
+    git pull "$1" "$2" $ARGS
+    git checkout master
+}
+
 
 function clone {
     TMP_REPO="/tmp/${1}"
@@ -26,7 +38,7 @@ function make_new_repo {
     cd $NEW_REPO
     git init
 
-    clone matisse
+    clone matisse-temp
     git filter-repo \
         --path .gitmodules \
         --path arium-dashboards \
@@ -35,14 +47,19 @@ function make_new_repo {
         --invert-paths --force
 
     clone matisse-backend
+    grab_remote git@github.com:vgordeyev/matisse-backend.git ISSUE-172-pickup-existing-authors-as-users
+    git reset --hard origin/okta
     git filter-repo \
         --path src/main/java/are/ \
         --invert-paths --force
     git filter-repo --to-subdirectory-filter matisse-backend
 
     clone matisse-frontend
+    grab_remote git@github.com:cgerrie/matisse-frontend.git issue-103-chart-x-axis-options
+    grab_remote git@github.com:cgerrie/matisse-frontend.git issue-103-new-chart-calculation
     grab_remote git@github.com:cgerrie/matisse-frontend.git issue-103-new-chart-x-axis-options
-    cp -f package-lock.json /tmp/package-
+    grab_remote git@github.com:UriiChe/matisse-frontend.git fix-linted-issues
+    cp -f package-lock.json /tmp/
     git filter-repo \
         --path app/ \
         --path src/ \
@@ -51,24 +68,35 @@ function make_new_repo {
         --path data/ \
         --path q \
         --path yarn.lock \
+        --path apps/reinsurance/src/app/layouts/test/programme-mock-data.ts \
+        --path apps/reinsurance/yarn.lock \
         --path package-lock.json \
+        --path server-src \
+        --path Gruntfile.js \
+        --path webpack \
+        --path webpack.config.js \
+        --path webpack.common.config.js \
+        --path R-scripts \
+        --path .history \
+        --path test \
+        --path matisse-frontend/apps/reinsurance/src/app/shared/date-picker \
         --invert-paths --force
     git filter-repo --to-subdirectory-filter matisse-frontend
-    cp /tmp/package-lock.json matisse-frontend/
+    mv /tmp/package-lock.json matisse-frontend/
     git add .
     git commit -m 'Re-add package-lock.json'
 
     # Order of pulls matters so, for example, the whole backend in the history of two frontend branches
     cd $NEW_REPO
-    ARGS="--allow-unrelated-histories --no-edit"
     git pull /tmp/matisse master $ARGS
+    create_branch /tmp/matisse-backend ISSUE-172-pickup-existing-authors-as-users
     git pull /tmp/matisse-backend master $ARGS
-    git checkout -b issue-103-new-chart-x-axis-options
-    git pull /tmp/matisse-frontend issue-103-new-chart-x-axis-options $ARGS
-    git checkout master
-    git pull /tmp/matisse-frontend master --allow-unrelated-histories $ARGS
-
-    git remote add github git@github.com:analyzere/matisse-new.git
+    create_branch /tmp/matisse-frontend issue-103-chart-x-axis-options
+    create_branch /tmp/matisse-frontend issue-103-new-chart-calculation
+    create_branch /tmp/matisse-frontend issue-103-new-chart-x-axis-options
+    create_branch /tmp/matisse-frontend fix-linted-issues
+    git pull /tmp/matisse-frontend master $ARGS
+    git remote add github git@github.com:analyzere/matisse.git
 }
 
 function aggressive_gc {
@@ -82,5 +110,5 @@ function aggressive_gc {
 
 make_new_repo
 aggressive_gc
-git-big-files
+git-big-files | tee > /tmp/big-files.out
 echo "DISK USAGE: $(du -sh .)"
