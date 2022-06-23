@@ -102,3 +102,16 @@
                     auto-mode-alist))
 
 (add-hook 'c-mode-common-hook 'google-set-c-style)
+
+(defun unescape-region (beg end)
+  "Remove escape characters from strings copy/pasted from logs"
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (replace-string "\\n" "\n")
+      (goto-char (point-min))
+      (replace-string "\\t" "\t")
+      (goto-char (point-min))
+      (replace-string "\\\"" "\""))))
