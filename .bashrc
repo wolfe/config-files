@@ -231,18 +231,28 @@ function ppjson {
     cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2, sort_keys=True))' | sed 's/[ \t]*$//'
 }
 
-function _gitlsmerged_ {
-    git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master|dev|matisse|main|automated|1.13" | xargs -n 1 echo
+function _git_ls_merged_remote_ {
+    git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | xargs -n 1 echo
+}
+function _git_ls_merged_local_ {
+    git branch --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | xargs -n 1 echo
 }
 
 function gitlsmerged {
-    for var in $(_gitlsmerged_); do
+    git fetch --all --prune
+    for var in $(_git_ls_merged_local_); do
+        echo git branch --delete "$var"
+    done
+    for var in $(_git_ls_merged_remote_); do
         echo git push --delete $(cut -d '/' -f 1 <<< "$var") $(cut -d '/' -f 2- <<< "$var")
     done
 }
 
 function gitrmmerged {
-    for var in $(_gitlsmerged_); do
+    for var in $(_git_ls_merged_local_); do
+        git branch --delete "$var"
+    done
+    for var in $(_git_ls_merged_remote_); do
         git push --delete $(cut -d '/' -f 1 <<< "$var") $(cut -d '/' -f 2- <<< "$var")
     done
 }
@@ -281,3 +291,7 @@ source_if_exists $HOME/analyzere/.bashrc
 function npmfind {
     find $1 -not \( -name node_modules -prune \) "${@:2}"
 }
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
