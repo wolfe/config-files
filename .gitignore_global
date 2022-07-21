@@ -16,3 +16,7 @@ pyproject.toml
 ylt_generator/certs
 
 docs
+test
+
+node_modules
+package-lock.json

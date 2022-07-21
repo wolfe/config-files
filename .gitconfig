@@ -26,5 +26,5 @@
   submodule = log
 [tag]
 	sort = version:refname
-[http]
-	proxy = http://gateway.zscaler.net:80/
+# [http]
+# 	proxy = http://gateway.zscaler.net:80/

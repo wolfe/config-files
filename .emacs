@@ -50,7 +50,10 @@
                                 (setq c-basic-offset 2)))
 (add-hook 'js-mode-hook (lambda()
                             (make-local-variable 'js-indent-level)
-                            (setq js-indent-level 2)))
+                            (setq js-indent-level
+                                  (if (string-match-p "package.json\\'" buffer-file-name)
+                                      4
+                                      2))))
 
 
 ;;; Prevent extraneous tabs
