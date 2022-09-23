@@ -6,7 +6,7 @@
 [alias]
   l = log --date=format:'%Y-%m-%d %H:%M' --pretty=format:'%h %Cgreen%ad%Creset %s (%an)'
   s = log --date=short --pretty=format:'%h %ad %<(12,trunc)%an %<(120,trunc)%s' --no-merges
-  refl = reflog --pretty=format:'%h %Cgreen%ai%Creset %gd %s'
+  refl = reflog --pretty=format:'%h %Cgreen%ai%Creset %gd %s (%an)'
   graph = log --graph --decorate --pretty=oneline --abbrev-commit
   teamweek = log --pretty=format:'%h %Cgreen%ad%Creset %s (%an)' --since '8 days ago' --date=short
   teamtwoweek = log --pretty=format:'%h %Cgreen%ad%Creset %s' --since '15 days ago' --date=short
