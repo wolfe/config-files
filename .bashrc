@@ -231,11 +231,14 @@ function ppjson {
     cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2, sort_keys=True))' | sed 's/[ \t]*$//'
 }
 
+PROTECTED_BRANCHES="master|matisse-qa"
+
+_PROTECTED_BRANCHES="$(git rev-parse --abbrev-ref HEAD)|${PROTECTED_BRANCHES}"
 function _git_ls_merged_remote_ {
-    git branch -r --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | xargs -n 1 echo
+    git branch -r --merged | egrep -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
 }
 function _git_ls_merged_local_ {
-    git branch --merged | egrep -v "$(git rev-parse --abbrev-ref HEAD)|master" | xargs -n 1 echo
+    git branch --merged | egrep -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
 }
 
 function gitlsmerged {
@@ -243,6 +246,7 @@ function gitlsmerged {
     for var in $(_git_ls_merged_local_); do
         echo git branch --delete "$var"
     done
+    echo "================================================================================"
     for var in $(_git_ls_merged_remote_); do
         echo git push --delete $(cut -d '/' -f 1 <<< "$var") $(cut -d '/' -f 2- <<< "$var")
     done
@@ -295,3 +299,7 @@ function npmfind {
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+function terror {
+    terraform "$1" -var-file=config/$(terraform workspace show).tfvars "${@:2}"
+}
