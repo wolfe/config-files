@@ -1,6 +1,0 @@
-#!/bin/bash
-
-cd ~/qvtrace/models/tmp
-for i in `find . -name '*.out' -or -name '*.q??'`; do
-    /bin/mv $i ../$i
-done

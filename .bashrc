@@ -231,22 +231,23 @@ function ppjson {
     cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2, sort_keys=True))' | sed 's/[ \t]*$//'
 }
 
-PROTECTED_BRANCHES="master|matisse-qa"
+PROTECTED_BRANCHES="master|matisse-qa|matisse-staging"
 
-_PROTECTED_BRANCHES="$(git rev-parse --abbrev-ref HEAD)|${PROTECTED_BRANCHES}"
 function _git_ls_merged_remote_ {
+    _PROTECTED_BRANCHES="$(git rev-parse --abbrev-ref HEAD)|${PROTECTED_BRANCHES}"
     git branch -r --merged | egrep -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
 }
 function _git_ls_merged_local_ {
+    _PROTECTED_BRANCHES="$(git rev-parse --abbrev-ref HEAD)|${PROTECTED_BRANCHES}"
     git branch --merged | egrep -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
 }
 
 function gitlsmerged {
     git fetch --all --prune
+    echo "================================================================================"
     for var in $(_git_ls_merged_local_); do
         echo git branch --delete "$var"
     done
-    echo "================================================================================"
     for var in $(_git_ls_merged_remote_); do
         echo git push --delete $(cut -d '/' -f 1 <<< "$var") $(cut -d '/' -f 2- <<< "$var")
     done
