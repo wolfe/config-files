@@ -291,7 +291,7 @@ export PATH=~/.local/bin:$PATH  # Used by pip install
 
 # stty intr ^J  # So I can map ^C to copy
 
-source_if_exists $HOME/analyzere/.bashrc
+source_if_exists $HOME/config-analyzere/.bashrc
 
 function npmfind {
     find $1 -not \( -name node_modules -prune \) "${@:2}"
