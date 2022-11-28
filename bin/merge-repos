@@ -3,11 +3,38 @@
 # main mistake -- left a few too many branches since `git fork` grabs 'em all
 # might have been nicer to put working branches in a fork somewhere.
 
+# OMITTED:
+#    analyzere-python-examples --- Has big csvs (12M and 25M)
+
 set -xue -o pipefail
 
 cd $HOME
-NEW_REPO=matisse-new
+NEW_REPO=analyzere
+SRC=$HOME/monorepo-originals
+DEST=$HOME/monorepo-filtered
 ARGS="--allow-unrelated-histories --no-edit"
+
+rm -f /tmp/merge-repos.log
+
+function update_repos {
+    cd "${SRC}"
+    for i in *
+    do
+        (cd $i; git fetch origin master; git reset --hard origin/master)
+    done
+}
+
+function log {
+    echo $* >> /tmp/merge-repos.log
+}
+
+function log_du {
+    rm -rf /tmp/TEST >& /dev/null
+    git clone . /tmp/TEST >& /dev/null
+    echo -n $(pwd) >> /tmp/merge-repos.log ""
+    (cd /tmp/TEST && du -sh . | awk '{print $1;}' >> /tmp/merge-repos.log)
+    rm -rf /tmp/TEST >& /dev/null
+}
 
 function grab_remote {
     git remote add temp "$1"
@@ -25,78 +52,149 @@ function create_branch {
 
 
 function clone {
-    TMP_REPO="/tmp/${1}"
-    rm -rf $TMP_REPO
-    git clone "git@github.com:analyzere/${1}.git" $TMP_REPO
+    TMP_REPO="${2}"
+    rm -rf "$TMP_REPO"
+    git clone "${SRC}/${1}" "$TMP_REPO"
+    # If wolfe has a branch monorepo, merge it in
     cd $TMP_REPO
+    echo git pull git@github.com:wolfe/${1}.git monorepo
+    git pull git@github.com:wolfe/${1}.git monorepo || echo -n
+    log_du
 }
 
-function make_new_repo {
-    # Initialize new repository
-    rm -rf $NEW_REPO
-    mkdir $NEW_REPO
-    cd $NEW_REPO
-    git init
+function init_repo {
+    clone analyzere $HOME/analyzere
+}
 
-    clone matisse-temp
+function clone_others {
+    cat >/dev/null <<EOF
+Initialize new repository
+OMITTING:
+  graphene
+  matisse-docs
+  analyzere-python-examples
+
+???:
+  optimization-results-viewer
+
+INCLUDE:
+  are-platform => are-platform
+    except are-platform/terraform => terraform
+  are-csharp => are-csharp
+  are-excel => are-excel
+  are-docs => are-docs
+  recruitment => recruitment ???
+  david-config-files => users/wolfe
+  matisse => matisse
+EOF
+    clone are-platform $DEST/are-platform # repo w/o terraform
+    # 87M -> 50M
     git filter-repo \
-        --path .gitmodules \
-        --path arium-dashboards \
-        --path reinsurance-standalone \
-        --path adminpanel-starter \
+        --path API \
+        --path Analytics \
+        --path Deployment \
+        --path Messages/Messages \
+        --path Messages/cpp \
+        --path Optimization \
+        --path Tests \
+        --path Tools \
+        --path api \
+        --path api-v1/requirements \
+        --path api-v2 \
+        --path clients \
+        --path deployment/Azure \
+        --path deployment/Provision \
+        --path deployment/docker \
+        --path deployment/docs/images \
+        --path deployment/docs/Deployment-Operations.md \
+        --path deployment/docs/Swarm-mode.md \
+        --path deployment/docs/UAT-builds.md \
+        --path deployment/errbot \
+        --path deployment/pipeline/terraform \
+        --path deployment/provision \
+        --path deployment/salt \
+        --path deployment/terraform \
+        --path deployment/vagrant \
+        --path docs/source/images \
+        --path examples \
+        --path legacy-tests \
+        --path optimization/arejl \
+        --path optimization/ARE/benchmark/report_archive \
+        --path tools/build \
         --invert-paths --force
+    git filter-repo --to-subdirectory-filter prime/are-platform
+    git mv prime/are-platform/terraform . && git commit -m 'NO-ISSUE: Move terraform up to root directory'
+    git filter-repo --analyze
+    log_du
 
-    clone matisse-backend
-    grab_remote git@github.com:vgordeyev/matisse-backend.git ISSUE-172-pickup-existing-authors-as-users
-    git reset --hard origin/okta
+    #
+    clone are-csharp $DEST/are-csharp
+    git filter-repo --to-subdirectory-filter prime/csharp
+    git filter-repo --analyze
+    log_du
+
+    #
+    clone are-excel $DEST/are-excel
+    git filter-repo --to-subdirectory-filter prime/excel
+    git filter-repo --analyze
+    log_du
+
+    #
+    clone are-docs $DEST/are-docs
+    git filter-repo --to-subdirectory-filter prime/docs.analyzere.net
+    git filter-repo --analyze
+    log_du
+
+    # <1M
+    clone recruitment $DEST/recruitment
+    git filter-repo --to-subdirectory-filter recruitment
+    git filter-repo --analyze
+    log_du
+
+    # <1M
+    clone david-config-files $DEST/david
+    git filter-repo --to-subdirectory users/wolfe
+    git filter-repo --analyze
+    log_du
+
+    # 41M -> 39M
+    clone matisse $DEST/matisse
+    git filter-repo --to-subdirectory-filter matisse --force
     git filter-repo \
-        --path src/main/java/are/ \
+        --path matisse/matisse-frontend/libs/ui/src/assets \
+        --path matisse/matisse-frontend/libs/ui/src/assets \
+        --path matisse/matisse-frontend/libs/feature-sankeys/src/lib/sankeys-table-widget \
+        --path matisse/matisse-frontend/apps/reinsurance/src/app/sankeys/tiles \
+        --path matisse/matisse-frontend/apps/reinsurance/src/app/analyzere/calculation/widgets-summary-calculation \
+        --path matisse/matisse-frontend/apps/reinsurance/src/app/sankeys/graph \
+        --path matisse/matisse-frontend/libs/feature-sankeys/src/lib/metrics \
+        --path matisse/matisse-frontend/apps/reinsurance/src/app/layouts/main-widgets-layout \
+        --path matisse/matisse-frontend/libs/feature-widgets/src/lib/components/table-props-container \
+        --path matisse/matisse-frontend/libs/feature-widgets/src/lib/components/table-metrics-definer \
+        --path matisse/matisse-frontend/libs/feature-sankeys/src/lib/metrics/perspective \
+        --path matisse/matisse-frontend/libs/feature-sankeys/src/lib/sankeys-table-widget/sankeys-table-widget-modal \
+        --path matisse/matisse-frontend/libs/feature-widgets/src/lib/modals/advanced-table-widget-modal \
         --invert-paths --force
-    git filter-repo --to-subdirectory-filter matisse-backend
+    git filter-repo --analyze
+    git mv matisse/.github ./github
+    git commit -m 'NO-ISSUE: moved matisse/.github to root'
+    log_du
 
-    clone matisse-frontend
-    grab_remote git@github.com:cgerrie/matisse-frontend.git issue-103-chart-x-axis-options
-    grab_remote git@github.com:cgerrie/matisse-frontend.git issue-103-new-chart-calculation
-    grab_remote git@github.com:cgerrie/matisse-frontend.git issue-103-new-chart-x-axis-options
-    grab_remote git@github.com:UriiChe/matisse-frontend.git fix-linted-issues
-    cp -f package-lock.json /tmp/
-    git filter-repo \
-        --path app/ \
-        --path src/ \
-        --path apps/cap/ \
-        --path UserGuide.pdf \
-        --path data/ \
-        --path q \
-        --path yarn.lock \
-        --path apps/reinsurance/src/app/layouts/test/programme-mock-data.ts \
-        --path apps/reinsurance/yarn.lock \
-        --path package-lock.json \
-        --path server-src \
-        --path Gruntfile.js \
-        --path webpack \
-        --path webpack.config.js \
-        --path webpack.common.config.js \
-        --path R-scripts \
-        --path .history \
-        --path test \
-        --path matisse-frontend/apps/reinsurance/src/app/shared/date-picker \
-        --invert-paths --force
-    git filter-repo --to-subdirectory-filter matisse-frontend
-    mv /tmp/package-lock.json matisse-frontend/
-    git add .
-    git commit -m 'Re-add package-lock.json'
+    clone are-platform.wiki $DEST/are-platform.wiki
+    git filter-repo --to-subdirectory-filter prime/wiki
+    log_du
+}
 
+function pulls_others {
     # Order of pulls matters so, for example, the whole backend in the history of two frontend branches
     cd $NEW_REPO
-    git pull /tmp/matisse master $ARGS
-    create_branch /tmp/matisse-backend ISSUE-172-pickup-existing-authors-as-users
-    git pull /tmp/matisse-backend master $ARGS
-    create_branch /tmp/matisse-frontend issue-103-chart-x-axis-options
-    create_branch /tmp/matisse-frontend issue-103-new-chart-calculation
-    create_branch /tmp/matisse-frontend issue-103-new-chart-x-axis-options
-    create_branch /tmp/matisse-frontend fix-linted-issues
-    git pull /tmp/matisse-frontend master $ARGS
-    git remote add github git@github.com:analyzere/matisse.git
+    git pull $DEST/recruitment master $ARGS
+    git pull $DEST/are-platform master $ARGS
+    git pull $DEST/are-csharp master $ARGS
+    git pull $DEST/are-excel master $ARGS
+    git pull $DEST/are-docs master $ARGS
+    git pull $DEST/david $ARGS
+    git pull $DEST/matisse master $ARGS
 }
 
 function aggressive_gc {
@@ -108,7 +206,12 @@ function aggressive_gc {
     git gc --prune=now
 }
 
-make_new_repo
+update_repos
+clone_others
+init_repo
+pulls_others
 aggressive_gc
-git-big-files | tee > /tmp/big-files.out
-echo "DISK USAGE: $(du -sh .)"
+git filter-repo --analyze
+git-big-files | tee > $DEST/big-files.out
+
+

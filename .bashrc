@@ -304,3 +304,23 @@ export NVM_DIR="$HOME/.nvm"
 function terror {
     terraform "$1" -var-file=config/$(terraform workspace show).tfvars "${@:2}"
 }
+
+function gitleaks {
+    docker run -v $(pwd):/path zricethezav/gitleaks:latest detect \
+           --source="/path" \
+           --report-path /path/gitleaks-report.json
+    if [[ $(cat gitleaks-report.json | wc -c) == 3 ]]
+    then
+        rm gitleaks-report.json
+    else
+        grep RuleID gitleaks-report.json  | sort | uniq -c > gitleaks-summary.txt
+    fi
+
+}
+
+function gitleaks-dirs {
+    for i in */ # are-platform matisse #
+    do
+        (cd $i ; /usr/bin/cp -f ../.gitleaks.toml . ; gitleaks $i >& gitleaks.out)
+    done
+}
