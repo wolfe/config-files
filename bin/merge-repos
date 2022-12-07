@@ -57,13 +57,14 @@ function clone {
     git clone "${SRC}/${1}" "$TMP_REPO"
     # If wolfe has a branch monorepo, merge it in
     cd $TMP_REPO
-    echo git pull git@github.com:wolfe/${1}.git monorepo
-    git pull git@github.com:wolfe/${1}.git monorepo || echo -n
+    git pull --no-edit git@github.com:wolfe/${1}.git monorepo || echo -n
     log_du
 }
 
 function init_repo {
-    clone analyzere $HOME/analyzere
+    clone analyzere-base $HOME/analyzere
+    git remote add upstream git@github.com:analyzere/analyzere.git
+    git remote remove origin
 }
 
 function clone_others {
@@ -88,7 +89,20 @@ INCLUDE:
   matisse => matisse
 EOF
     clone are-platform $DEST/are-platform # repo w/o terraform
+    git fetch $HOME/are-platform
     # 87M -> 50M
+    rm -rf /tmp/files && mkdir /tmp/files
+    SAVES=( tools/email-tools/are_send_release_info.py
+            tools/are_addusers.py
+            terraform/bin/put_matisse_regional_parameters.py
+            terraform/bin/put_prime_regional_parameters.py
+            terraform/modules/ecs_services/datadog/main.tf
+          )
+    PATHS=""
+    for f in "${SAVES[@]}"; do
+        PATHS="$PATHS --path $f"
+        cp $f /tmp/files;
+    done
     git filter-repo \
         --path API \
         --path Analytics \
@@ -121,9 +135,31 @@ EOF
         --path optimization/arejl \
         --path optimization/ARE/benchmark/report_archive \
         --path tools/build \
+        --path terraform/dev-verisk-prime/environments/config/prime-benchmark-dev.env \
+        --path terraform/dev-verisk-prime/environments/output \
+        --path terraform/us-east-2-test \
+        --path terraform/bootstraps \
+        --path terraform/us-east-2-sql-server-sandbox \
+        --path terraform/modules/cluster/ecs-services \
+        --path terraform/bin/put_regional_parameters.py \
+        --path tools/are_addusers_tullett.py \
+        --path tools/etcd \
+        --path tools/are_send_release_info.py \
+        --path tools/install_nessus.sh \
+        --path tools/pt_log_check.sh \
+        --path tools/pt-log-check.sh \
+        --path tools/tenant_clone \
+        --path config/archimedes \
+        --path jarvis-bot \
+        --path optimization/jarvis.pem \
+        --path deployment/jarvis.pem \
+        --path deploy \
+        $PATHS \
         --invert-paths --force
-    git filter-repo --to-subdirectory-filter prime/are-platform
-    git mv prime/are-platform/terraform . && git commit -m 'NO-ISSUE: Move terraform up to root directory'
+    git filter-repo --to-subdirectory-filter prime/are-platform --force
+    for f in "${SAVES[@]}"; do cp /tmp/files/$(basename $f) prime/are-platform/$f; done
+    git add .
+    git commit -m 'NO-ISSUE: re-add analyzere files w/o history'
     git filter-repo --analyze
     log_du
 
@@ -135,7 +171,9 @@ EOF
 
     #
     clone are-excel $DEST/are-excel
-    git filter-repo --to-subdirectory-filter prime/excel
+    git filter-repo --to-subdirectory-filter prime/excel --force
+    git mv prime/excel/.github ./
+    git commit -m 'NO-ISSUE: move excel .github to root'
     git filter-repo --analyze
     log_du
 
@@ -160,6 +198,15 @@ EOF
     # 41M -> 39M
     clone matisse $DEST/matisse
     git filter-repo --to-subdirectory-filter matisse --force
+    rm -rf /tmp/files && mkdir /tmp/files
+    SAVES=( matisse/matisse-backend/src/main/resources/config/application.yml
+            matisse/matisse-frontend/apps/reinsurance/src/app/analyzere/download-file.service.ts
+            matisse/matisse-frontend/apps/reinsurance/src/app/analyzere/profile/analyzere-profiles.service.ts )
+    PATHS=""
+    for f in "${SAVES[@]}"; do
+        PATHS="$PATHS --path $f"
+        cp $f /tmp/files;
+    done
     git filter-repo \
         --path matisse/matisse-frontend/libs/ui/src/assets \
         --path matisse/matisse-frontend/libs/ui/src/assets \
@@ -174,10 +221,21 @@ EOF
         --path matisse/matisse-frontend/libs/feature-sankeys/src/lib/metrics/perspective \
         --path matisse/matisse-frontend/libs/feature-sankeys/src/lib/sankeys-table-widget/sankeys-table-widget-modal \
         --path matisse/matisse-frontend/libs/feature-widgets/src/lib/modals/advanced-table-widget-modal \
+        --path matisse/matisse-frontend/webpack.prod.config.js \
+        --path matisse/matisse-backend/src/main/resources/config/application.yml \
+        --path matisse/matisse-frontend/apps/reinsurance/src/assets/data/auth.conf.json \
+        --path matisse/matisse-frontend/apps/reinsurance/src/environments/environment.qa.ts \
+        --path matisse/matisse-frontend/apps/reinsurance/src/environments/environment.dev.ts \
+        --path matisse/matisse-frontend/apps/reinsurance/src/environments/environment.staging.ts \
+        $PATHS \
         --invert-paths --force
+    git mv matisse/.github ./
+    git commit -m 'NO-ISSUE: move matisse .github to root'
+    mkdir -p matisse/matisse-backend/src/main/resources/config
+    for f in "${SAVES[@]}"; do cp /tmp/files/$(basename $f) $f; done
+    git add .
+    git commit -m 'NO-ISSUE: re-add matisse files w/o history'
     git filter-repo --analyze
-    git mv matisse/.github ./github
-    git commit -m 'NO-ISSUE: moved matisse/.github to root'
     log_du
 
     clone are-platform.wiki $DEST/are-platform.wiki
@@ -213,5 +271,3 @@ pulls_others
 aggressive_gc
 git filter-repo --analyze
 git-big-files | tee > $DEST/big-files.out
-
-
