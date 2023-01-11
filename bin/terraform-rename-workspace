@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -uex -o pipefail
+
+OLD="$1"
+NEW="$2"
+TEMP_STORE=/tmp/old.tfstate
+
+terraform workspace select "$OLD"
+terraform show > "${TEMP_STORE}.old"
+terraform state pull >"$TEMP_STORE"
+terraform workspace new "$NEW"
+terraform state push "$TEMP_STORE"
+terraform show > "${TEMP_STORE}.new"
+echo diff "${TEMP_STORE}.old" "${TEMP_STORE}.new"
+echo "********** OUTPUT BELOW **********************"
+diff "${TEMP_STORE}.old" "${TEMP_STORE}.new"
+echo "********** OUTPUT ABOVE **********************"
+echo "* ONCE YOU ARE HAPPY NOTHING BROKE, YOU CAN: *"
+echo "terraform workspace delete -force ${OLD}"
