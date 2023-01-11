@@ -1,12 +1,19 @@
 #!/bin/bash
 
-# main mistake -- left a few too many branches since `git fork` grabs 'em all
-# might have been nicer to put working branches in a fork somewhere.
+set -xue -o pipefail
+
+# MAIN MISTAKE LAST TIME:
+# Rather than pushing work-in-progress branches to the main fork, use
+# my own fork so people don't clone all those branches willy-nilly.
+
+# TODO:
+# .github/actions for Excel
+# .git hooks
+# Jenkinsfiles (Jason)
+# GH_TOKEN --- Not needed?  Instead refactor do run terraform from local repo?
 
 # OMITTED:
 #    analyzere-python-examples --- Has big csvs (12M and 25M)
-
-set -xue -o pipefail
 
 cd $HOME
 NEW_REPO=analyzere
@@ -15,6 +22,19 @@ DEST=$HOME/monorepo-filtered
 ARGS="--allow-unrelated-histories --no-edit"
 
 rm -f /tmp/merge-repos.log
+
+function bundle {
+	echo "# To unbundle, sh this file"
+	for i in $*
+	do
+		echo "cat >"$i" <<'GO.SYSIN DD *'"
+		cat $i
+        if [ `tail -1 $i | wc -l` = 0 ] # file ends in no newline
+        then echo ; echo "Appended newline to file $i" > /dev/stderr
+        fi
+		echo "GO.SYSIN DD *"
+	done
+}
 
 function update_repos {
     cd "${SRC}"
@@ -57,7 +77,6 @@ function clone {
     git clone "${SRC}/${1}" "$TMP_REPO"
     # If wolfe has a branch monorepo, merge it in
     cd $TMP_REPO
-    git pull --no-edit git@github.com:wolfe/${1}.git monorepo || echo -n
     log_du
 }
 
@@ -68,28 +87,7 @@ function init_repo {
 }
 
 function clone_others {
-    cat >/dev/null <<EOF
-Initialize new repository
-OMITTING:
-  graphene
-  matisse-docs
-  analyzere-python-examples
-
-???:
-  optimization-results-viewer
-
-INCLUDE:
-  are-platform => are-platform
-    except are-platform/terraform => terraform
-  are-csharp => are-csharp
-  are-excel => are-excel
-  are-docs => are-docs
-  recruitment => recruitment ???
-  david-config-files => users/wolfe
-  matisse => matisse
-EOF
-    clone are-platform $DEST/are-platform # repo w/o terraform
-    git fetch $HOME/are-platform
+    clone are-platform $DEST/are-platform
     # 87M -> 50M
     rm -rf /tmp/files && mkdir /tmp/files
     SAVES=( tools/email-tools/are_send_release_info.py
@@ -173,6 +171,24 @@ EOF
     clone are-excel $DEST/are-excel
     git filter-repo --to-subdirectory-filter prime/excel --force
     git mv prime/excel/.github ./
+    ( cd .github/workflows
+      bundle excel* \
+          | sed 's@SLACK_PR_CHANNEL_ID@SLACK_PUSHES_CHANNEL_ID@g' \
+          | sed 's@[*][*]@prime/excel/**@g' \
+          | sed 's@working-directory: [.]@working-directory: ./prime/excel@g' \
+          | sed 's@ TestResults@ prime\\excel\\TestResults@g' \
+          | sed 's@ ExcelDNA@ prime\\excel\\ExcelDNA@g' \
+          | sed 's@build:@build-excel:@g' \
+          | sed 's@\[build\]@[build-excel]@g' \
+          | sed 's@needs[.]build@needs.build-excel@g' \
+          | sed 's@title: ["]@title: "MONOREPO TEST @g' \
+          | bash
+      bundle excel-pr* \
+          | sed 's@ps1@ps1\n        working-directory: ./prime/excel@g' \
+          | sed 's@name: MSTest@name: MSTest\n        working-directory: ./prime/excel@g' \
+          | bash
+    )
+    git add .
     git commit -m 'NO-ISSUE: move excel .github to root'
     git filter-repo --analyze
     log_du
@@ -209,7 +225,6 @@ EOF
     done
     git filter-repo \
         --path matisse/matisse-frontend/libs/ui/src/assets \
-        --path matisse/matisse-frontend/libs/ui/src/assets \
         --path matisse/matisse-frontend/libs/feature-sankeys/src/lib/sankeys-table-widget \
         --path matisse/matisse-frontend/apps/reinsurance/src/app/sankeys/tiles \
         --path matisse/matisse-frontend/apps/reinsurance/src/app/analyzere/calculation/widgets-summary-calculation \
@@ -227,10 +242,26 @@ EOF
         --path matisse/matisse-frontend/apps/reinsurance/src/environments/environment.qa.ts \
         --path matisse/matisse-frontend/apps/reinsurance/src/environments/environment.dev.ts \
         --path matisse/matisse-frontend/apps/reinsurance/src/environments/environment.staging.ts \
+        --path matisse/.github/workflows/notify-slack.yaml \
+        --path matisse/.github/workflows/notify-on-pr.yaml \
+        --path matisse/.github/workflows/notify-on-merge.yaml \
         $PATHS \
         --invert-paths --force
     git mv matisse/.github ./
-    git commit -m 'NO-ISSUE: move matisse .github to root'
+    ( cd .github/workflows
+      bundle matisse* \
+          | sed 's@matisse-[*]/@matisse/matisse-*/@g' \
+          | sed 's@matisse-backend/@matisse/matisse-backend/@g' \
+          | sed 's@matisse-frontend/@matisse/matisse-frontend/@g' \
+          | sed 's@./build/@./matisse/build/@g' \
+          | sed 's@SLACK_PR_CHANNEL_ID@SLACK_PUSHES_MATISSE_CHANNEL_ID@g' \
+          | sed 's@title: ["]@title: "MONOREPO TEST @g' \
+          | bash
+      sed -i "75,82d" matisse-merge.yaml
+    )
+    sed -i 's@are-platform@prime/are-platform@g' matisse/build/deploy
+    git add .
+    git commit -m 'NO-ISSUE: move matisse .github to root and actions, deploy'
     mkdir -p matisse/matisse-backend/src/main/resources/config
     for f in "${SAVES[@]}"; do cp /tmp/files/$(basename $f) $f; done
     git add .
@@ -253,6 +284,15 @@ function pulls_others {
     git pull $DEST/are-docs master $ARGS
     git pull $DEST/david $ARGS
     git pull $DEST/matisse master $ARGS
+    # Pull in and rename latest tags
+    git fetch $DEST/are-excel 'refs/tags/release-*:refs/tags/excel-*' --no-tags
+    git fetch $DEST/are-platform 'refs/tags/release-1*:refs/tags/prime-1*' --no-tags  # Deleting tags prime-9*
+    git fetch $DEST/are-csharp 'refs/tags/release-*:refs/tags/csharp-*' --no-tags
+    git fetch $DEST/matisse 'refs/tags/*:refs/tags/matisse-v*' --no-tags
+}
+
+function final_cleanup {
+    cd $NEW_REPO
 }
 
 function aggressive_gc {
@@ -268,6 +308,7 @@ update_repos
 clone_others
 init_repo
 pulls_others
+final_cleanup
 aggressive_gc
 git filter-repo --analyze
-git-big-files | tee > $DEST/big-files.out
+git-big-files | tee > /tmp/big-files.out
