@@ -1,0 +1,16 @@
+#!/bin/bash
+export DOMAIN=localhost
+export FIRST_SUPERUSER=admin@com.net
+export FIRST_SUPERUSER_PASSWORD=admin
+export POSTGRES_DB=dbg
+export POSTGRES_PASSWORD=qwerty14%40%24
+export POSTGRES_SERVER=localhost
+export POSTGRES_USER=arium
+export PROJECT_NAME=Matisse-g
+export PYTHONUNBUFFERED=1
+export SENTRY_DSN=https://qq.com
+export SERVER_HOST=http://localhost
+export SERVER_NAME=localhost
+export OKTA_AUDIENCE=matisse-development.analyzere.dev
+export OKTA_CLIENT_ID=0oa1bufiadrBwnUdX0h8
+export OKTA_ISSUER_URI=https://sso.uat.verisk.com/oauth2/aus1bufjixj1yFngY0h8

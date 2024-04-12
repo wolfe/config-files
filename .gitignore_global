@@ -10,10 +10,9 @@ logs
 # c:
 ${sys:log_dir}
 
-/bin
-
-test
-
 node_modules
 
 target
+database.sql
+
+__pycache__

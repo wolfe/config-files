@@ -1,0 +1,132 @@
+#!/bin/bash
+
+for username in AbhilashBADAM410; do
+    echo You may wish to disable your github actions
+    echo Running at https://github.com/$username/analyzere/actions
+    echo Disable at https://github.com/$username/analyzere/settings/actions
+    echo
+done
+
+exit 0
+
+cd /home/wolfe/user-docs/RENDERED
+python3 -m http.server --directory . 5000
+exit 0
+
+~/analyzere/global/base/linters/update_linters.sh
+
+
+exit 0
+
+cd $HOME/graphene
+
+# Generate secrets file
+./utils/gitleaks.sh
+
+exit 0
+
+# Save needed secrets
+cp -r nginx/cert/ /tmp/
+
+# git filter-repo wants to run on a fresh clone
+cp secrets ELSEWHERE
+cd ELSEWHERE
+git clone git@github.com:analyzere/graphene.git
+cd graphene
+
+# Remove secrets and large blobs from history, excluding HEAD
+git filter-repo --strip-blobs-bigger-than 5M --replace-text ../secrets.txt
+
+# Check results
+./utils/gitleaks.sh
+> See `INF no leaks found`
+
+# Restore secrets
+rm -r nginx/cert
+mv /tmp/cert nginx/
+
+# Commit needed secrets
+git add nginx/cert
+git commit -m "Restore nginx certs"
+
+
+exit 0
+
+~/analyzere/global/base/update.sh python \
+    && ~/analyzere/global/base/linters/update_linters.sh
+
+exit 0
+
+# For qa I had to:
+ENV=staging
+DB=$(map-deployment $ENV database-name)
+echo "SET ROLE arium; DROP DATABASE $DB WITH (FORCE); SET ROLE postgres; CREATE DATABASE $DB; ALTER DATABASE $DB OWNER TO arium; GRANT ALL ON DATABASE $DB TO GROUP arium;" \
+   | AWS_REGION=eu-west-1 AWS_PROFILE=dev ssh $(map-deployment development ec2-client-id) "PGPASSWORD=\$(get-rds-password) psql"
+migrate-rds dump-database $ENV \
+   | AWS_REGION=eu-west-1 AWS_PROFILE=dev ssh $(map-deployment development ec2-client-id) "PGUSER=arium PGPASSWORD=r7aDh4oaCvx5jFNzQ5DkEebH psql -1 $DB"
+exit 0
+
+for name in $(aws --region 'eu-west-1' ssm describe-parameters | jq -r '.Parameters[].Name' | grep matisse); do
+    aws --region 'eu-west-1' ssm get-parameter --name "$name" --with-decryption | jq -r '.Parameter | [.Name, .Value] | @tsv'
+done
+
+exit 0
+
+[[ $1 == '1' ]] && ( echo "SET ROLE arium; DROP SCHEMA IF EXISTS test_client_1 CASCADE;" && aws s3 cp s3://matisse-test-assets/test_client_1.db - ) | psql -1
+[[ $1 == '2' ]] && ( echo "insert into test_client_1.server_uri (uri,type,region,client_id,user_pool_id) VALUES('https://dummy-url.graphene.foo/', 'graphene', 'us-east-2', '6smufc4l9evqhqjrnadldnn9bf', 'us-east-2_MicC0nwmc');" )
+exit 0
+
+
+# x=$(aws --region 'eu-west-1' ssm get-parameter --name '/matisse/shared/rds_password' --with-decryption)
+# valueof() {
+#     # stdin is assumed to be JSON key,value string pairs
+#     # $1 is the key desired
+#     # Avoiding use of jq since the Python footprint is large
+#     sed 's/[ ]*:[ ]*/:/g' | grep -Eo '"'"$1"'":"[^"]*"' | sed 's/"[^"]*":"\([^"]*\)"/\1/'
+# }
+# echo doing
+# echo "$x" | valueof Value
+# echo done
+# exit 0
+
+cd
+while true
+cd ~/analyzere/matisse/acceptance_tests
+do
+    MATISSE_TEST_URL=http://localhost:4200 poetry run pytest bdd
+done
+
+exit 0
+
+TAG=$(curl -s https://matisse-ci-backend.analyzere.dev/api/actuator/info | jq -r .git.hash)-dev
+cd ~/analyzere/matisse/lambda/db-admin/
+RELEASE_TAG=$1 ./publish
+
+cd ~/analyzere/prime/platform/terraform/dev-matisse/environments
+terraform apply -var-file=config/$(terraform workspace show).tfvars --var="docker_release_tag=$TAG" --var="lambda_release_tag=$1"
+
+exit 0
+
+# cd ~/analyzere/matisse/lambda/
+# docker build -t david . && docker run -v ~/.aws:/root/.aws:ro --network="host" --env-file=.env -it david
+
+# cd ~/tmp/sql
+# for i in 6.sql; do
+#     cat $i | PGOPTIONS='--search_path=test_user' time psql > $i.out 2>$i.time
+# done
+
+
+# terraform apply -target=module.postgres-lambda-matisse-dev.aws_ecr_repository.repo -target=module.postgres-lambda-matisse-dev.aws_ecr_lifecycle_policy.policy
+
+
+# cd ~/analyzere/matisse
+# # What about:  scss, html
+# for sha in $(git l | grep ' Merge pull request' | cut -d' ' -f1 | head -200 ); do
+#     git diff $sha~1..$sha --name-only > /tmp/files
+#     printf "%2s,%2s,%s" \
+#        $(cat /tmp/files | egrep '(ts|java|/schemas/schemas)$' | wc -w) \
+#        $(cat /tmp/files | egrep '(spec.ts|IT.java|Test.java|/schemas/tests)$' | wc -w) \
+#        "$(git show $sha --date=format:'%Y-%m-%d' --pretty=format:'%h,%ad,%s,%an' | head -1 | cut -c12- | sed 's/Merge pull request //')" \
+#     | grep -v ' 0  0 '
+# done
+

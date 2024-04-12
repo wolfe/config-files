@@ -4,6 +4,8 @@
 [push]
   default = simple
 [alias]
+  fp = push --force-with-lease
+  pf = push --force-with-lease
   l = log --date=format:'%Y-%m-%d %H:%M' --pretty=format:'%h %Cgreen%ad%Creset %s (%an)'
   s = log --date=short --pretty=format:'%h %ad %<(12,trunc)%an %<(120,trunc)%s' --no-merges
   refl = reflog --pretty=format:'%h %Cgreen%ai%Creset %gd %s (%an)'

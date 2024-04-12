@@ -1,3 +1,5 @@
+(setq python-shell-interpreter "python3")
+
 (defun unquote-string-region (beg end)
   "Unquote all the \" \n and \t characters in the region"
   (interactive "r")
@@ -18,7 +20,7 @@
   (interactive)
   (require 'package)
 
-  (setq package-list '(use-package guide-key rainbow-mode spaceline auctex reftex pdf-tools helm-bibtex elfeed calfw calfw-ical calfw-org neotree elpy php-mode undo-tree smex auto-complete google-translate org-bullets org-super-agenda magit dash dired-subtree dired-rainbow ranger unfill define-word fuzzy hydra guess-language web-mode symon protobuf-mode google-c-style yaml-mode))
+  (setq package-list '(use-package guide-key rainbow-mode spaceline auctex reftex pdf-tools helm-bibtex elfeed calfw calfw-ical calfw-org neotree elpy php-mode undo-tree smex auto-complete google-translate org-bullets org-super-agenda magit dash dired-subtree dired-rainbow ranger unfill define-word fuzzy hydra guess-language web-mode symon protobuf-mode google-c-style yaml-mode typescript-mode flymake-json python-mode flymake terraform-mode))
   (setq package-archives '(("melpa-stable" . "https://stable.melpa.org/packages/")
                            ("gnu" . "http://elpa.gnu.org/packages/")
                            ("melpa" . "https://melpa.org/packages/")
@@ -55,6 +57,7 @@
                                       4
                                       2))))
 
+(setq-default nxml-child-indent 4)
 
 ;;; Prevent extraneous tabs
 (setq-default indent-tabs-mode nil)
@@ -90,7 +93,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (yaml-mode google-c-style symon web-mode guess-language hydra fuzzy define-word unfill ranger dired-rainbow dired-subtree magit org-super-agenda org-bullets google-translate auto-complete smex undo-tree php-mode elpy neotree calfw-org calfw-ical calfw elfeed helm-bibtex pdf-tools auctex spaceline rainbow-mode guide-key use-package protobuf-mode groovy-mode)))
+    (terraform-mode flymake-mode python-mode flymake-json typescript-mode yaml-mode google-c-style symon web-mode guess-language hydra fuzzy define-word unfill ranger dired-rainbow dired-subtree magit org-super-agenda org-bullets google-translate auto-complete smex undo-tree php-mode elpy neotree calfw-org calfw-ical calfw elfeed helm-bibtex pdf-tools auctex spaceline rainbow-mode guide-key use-package protobuf-mode groovy-mode)))
  '(safe-local-variable-values (quote ((js-indent-level . 2)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -105,6 +108,8 @@
                     auto-mode-alist))
 
 (add-hook 'c-mode-common-hook 'google-set-c-style)
+(add-hook 'js-mode-hook 'flymake-json-maybe-load)
+(add-hook 'json-mode-hook 'flymake-json-load)
 
 (defun unescape-region (beg end)
   "Remove escape characters from strings copy/pasted from logs"

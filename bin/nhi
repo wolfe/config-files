@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd ~/graphene/client_examples/python_toy_example
+poetry run python nhi.py
+cd nhi
+jq . financial_3inurings_3reins_3years_2max.json  > a
+jq . financial_3inurings_3reins_3years_9max.json  > b
+meld a b

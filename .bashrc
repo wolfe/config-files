@@ -231,7 +231,7 @@ function ppjson {
     cat $1 | python -c'import fileinput, json; print(json.dumps(json.loads("".join(fileinput.input())), indent=2, sort_keys=True))' | sed 's/[ \t]*$//'
 }
 
-PROTECTED_BRANCHES="master|matisse-qa|matisse-staging"
+PROTECTED_BRANCHES="master|matisse-*"
 
 function _git_ls_merged_remote_ {
     _PROTECTED_BRANCHES="$(git rev-parse --abbrev-ref HEAD)|${PROTECTED_BRANCHES}"
@@ -291,7 +291,7 @@ export PATH=~/.local/bin:$PATH  # Used by pip install
 
 # stty intr ^J  # So I can map ^C to copy
 
-source_if_exists $HOME/config-analyzere/.bashrc
+source_if_exists $HOME/analyzere/users/wolfe/.bashrc
 
 function npmfind {
     find $1 -not \( -name node_modules -prune \) "${@:2}"
@@ -305,6 +305,22 @@ function terror {
     terraform "$1" -var-file=config/$(terraform workspace show).tfvars "${@:2}"
 }
 
+function check-staged-changes {
+    docker run -v $(pwd):/path zricethezav/gitleaks:latest protect --staged -v \
+       --source="/path" \
+       -l="debug" \
+       --report-path /path/gitleaks-report.json \
+
+    if [[ $(cat gitleaks-report.json | wc -c) == 3 ]]
+    then
+        rm gitleaks-report.json
+    else
+       echo "Error: gitleaks has detected sensitive information in your changes. Please remove the secret(s) highlighted in gitleaks-report.json file and retry."
+       echo "Aborting commit."
+       echo "You can circumvent this git hook with --no-verify."
+    fi
+}
+
 function gitleaks {
     docker run -v $(pwd):/path zricethezav/gitleaks:latest detect \
            --source="/path" \
@@ -315,12 +331,22 @@ function gitleaks {
     else
         grep RuleID gitleaks-report.json  | sort | uniq -c > gitleaks-summary.txt
     fi
-
 }
 
 function gitleaks-dirs {
     for i in */ # are-platform matisse #
     do
         (cd $i ; /usr/bin/cp -f ../.gitleaks.toml . ; gitleaks $i >& gitleaks.out)
+    done
+}
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+function gitblame {
+    git blame $* | while read hash others;
+    do
+        echo $hash $(git log -1 --pretty='%<(12,trunc)%s' $hash) '|' $others
     done
 }
