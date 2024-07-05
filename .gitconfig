@@ -21,6 +21,7 @@
   showtool = "!showci () { rev=${1:-HEAD}; git difftool $rev~1 $rev; }; showci $1"
 [core]
   excludesfile = ~/.gitignore_global
+	pager = less -FRX
 [difftool]
   prompt = false
 [diff]

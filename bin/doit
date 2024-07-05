@@ -1,5 +1,78 @@
 #!/bin/bash
 
+cd /home/wolfe/analyzere/matisse/scripts/cypress
+ MATISSE_TEST_URL: 'http://localhost:4200' \
+ MATISSE_TEST_BACKEND_URL: 'http://localhost:8080' \
+ MATISSE_TEST_USERNAME: 'test-acceptance@analyzere.com'
+ MATISSE_TEST_PASSWORD: ${{ secrets.MATISSE_TEST_PASSWORD }}
+ MATISSE_ANALYZERE_USERNAME: ${{ secrets.MATISSE_ANALYZERE_USERNAME }}
+ MATISSE_ANALYZERE_PASSWORD: ${{ secrets.MATISSE_ANALYZERE_PASSWORD }}
+
+
+exit 0
+
+function find {
+    /usr/bin/find $1 -name node_modules -prune -o "${@:2}"
+}
+
+find . -name '*.html'
+
+exit 0
+
+cd ~/analyzere/matisse/matisse-frontend/apps/e2e
+rm -rf ../../{dist,target}
+
+TARGET=/home/wolfe/analyzere/matisse/matisse-frontend/dist
+npx cypress run --browser chrome --headless --quiet --reporter junit
+exit 0
+
+cd ~/analyzere/matisse/matisse-frontend/apps/e2e
+rm -rf ../../{dist,target}
+
+for TEST in login.cy.ts login.screenshots.cy.ts
+do
+mkdir -p /home/wolfe/analyzere/matisse/matisse-frontend/target/{screenshots,videos,downloads}
+npx cypress run --config videosFolder=/home/wolfe/analyzere/matisse/matisse-frontend/target/videos,downloadsFolder=/home/wolfe/analyzere/matisse/matisse-frontend/target/downloads,screenshotsFolder=/home/wolfe/analyzere/matisse/matisse-frontend/target/screenshots --browser electron --headless --quiet --reporter junit --reporter-options mochaFile=/home/wolfe/analyzere/matisse/matisse-frontend/target/test-yyyy/results/yyyy.xml --spec cypress/e2e/${TEST}
+
+done
+exit 0
+################################################################
+done
+
+
+exit 0
+
+MAXIMUM_THREADS=2 RELATIVE_SPEC_DIRECTORY="apps/e2e/cypress/e2e" python ../../matisse/scripts/run-cypress-tests/run.py
+
+exit 0
+
+cd ~/analyzere
+git add .
+git commit -m 'MAT-1823: Cypress CI action'
+git push upstream MAT-1823-cypress-github-workflows
+
+exit 0
+
+cd ~/user-docs/
+( ./scripts/publish-docs graphene joe ; ./scripts/publish-docs matisse larry ) > ~/tmp/actual
+diff ~/tmp/{expected,actual}
+
+cd ~/user-docs/scripts/
+( ./publish-docs graphene joe ; ./publish-docs matisse larry ) > ~/tmp/actual
+diff ~/tmp/{expected,actual}
+
+exit 0
+
+cd $HOME/user-docs/RENDERED
+python3 -m http.server --directory . 5000 &> /dev/null &
+PID=$!
+cd ~/analyzere/global/tests/
+poetry run python3 ./test_doc_links.py http://localhost:5000/graphene/index.html
+STATUS="$?"
+kill $PID
+exit "$STATUS"
+
+
 for username in AbhilashBADAM410; do
     echo You may wish to disable your github actions
     echo Running at https://github.com/$username/analyzere/actions

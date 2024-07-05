@@ -1,10 +1,7 @@
 # Executed by default by interactive (but not login) scripts, but since
 # this is included by .bash_profile, this is called by all.
 
-[[ -s $HOME/.aws_credentials ]] && source $HOME/.aws_credentials
-
-export GWT_HOME=/usr/local/gwt
-export LPDEST=$PRINTER
+source $HOME/.shellrc.sh
 
 ################################################################
 # INCLUDING GIT IN PROMPT
@@ -22,58 +19,12 @@ function append_to_prompt {
 }
 PS1="\w\$(parse_git_branch): "
 
-################################################################
-# ALIASES
-################################################################
-alias cp="cp -i"
-alias mv="mv -i"
-alias ls="ls -F"  # -C
-alias lookup="cat ~/Dropbox/notes/address/* | grep -i"
-alias grep="grep -s"
-alias egrep="egrep -s"
-alias fgrep="fgrep -s"
-alias ssh="ssh -X"
-alias rehash="hash -r"
-alias dirs="dirs -v"
 
 if [[ "$OSTYPE" == *"linux"* ]] ; then
     function open {
         for i in "$@"; do xdg-open "$i"; done
     }
 fi
-
-################################################################
-
-################################################################
-# Global Environment variables
-################################################################
-
-export EDITOR='/usr/bin/emacs'
-export VISUAL=$EDITOR
-
-# bind 'set show-all-if-ambiguous on'		# Tab once for complete
-
-ulimit -c 0 # Maximum core file size
-
-# CDPATH
-for i in ~/*
-do
-if [ -d "$i" ]
-    then
-    CDPATH=$CDPATH:$i
-fi
-done
-export CDPATH='.':~$CDPATH
-export PATH=/usr/texbin:$PATH
-
-# LATEX
-export TEXINPUTS=.:./tex:$HOME/tex:$HOME/tex/combgames:$HOME/prosper:$HOME/courses/problems::
-export TEXPKS=./tex:./fonts/pk:$HOME/fonts/pk::
-export TEXFONTS=./tex:./fonts/tfm:$HOME/fonts/tfm::
-export XDVIFONTS=$TEXPKS
-export DVIPSHEADERS=$TEXINPUTS
-export MFINPUTS=.:./tex:./fonts/mf:$HOME/fonts/mf::
-export TEXBIB=$TEXINPUTS
 
 ################################################################
 # FUNCTIONS
@@ -89,7 +40,6 @@ function checksingletex {
         return 1
     fi
 }
-export -f checksingletex
 
 function lx {
     if ( checksingletex $* ) ; then
@@ -97,7 +47,6 @@ function lx {
         xdvi $*
     fi
 }
-export -f lx
 
 function lp {
     if ( checksingletex $* ) ; then
@@ -107,19 +56,17 @@ function lp {
         open $*.pdf
     fi
 }
-export -f lp
 
 function swap {
   # Check that the user provides exactly two arguments, and that files exist
   if [ $# != 2 ]; then echo Enter exactly two arguments; return 1; fi
   if [ ! -e $1 ]; then echo file $1 does not exists ; return 1; fi
   if [ ! -e $2 ]; then echo file $2 does not exists ; return 1; fi
-  if [ $2 == $1 ]; then echo files are identical ; return 1; fi
+  if [[ $2 == $1 ]]; then echo files are identical ; return 1; fi
   mv $1 swaptemp.tmp
   mv $2 $1
   mv swaptemp.tmp $2
 }
-export -f swap
 
 alias rsynccommand='rsync -Crlpuz --exclude "*~"'
 function rsyncbase {
@@ -133,13 +80,11 @@ function put {
   rsyncbase
   rsynccommand . $RDIR # put
 }
-export -f put
 
 function get {
   rsyncbase
   rsynccommand $RDIR . # get
 }
-export -f get
 
 function sync {
   echo "* PUT *"
@@ -147,7 +92,6 @@ function sync {
   echo "* GET *"
   get
 }
-export -f sync
 
 function rgrep {
     DIR="."
@@ -235,11 +179,11 @@ PROTECTED_BRANCHES="master|matisse-*"
 
 function _git_ls_merged_remote_ {
     _PROTECTED_BRANCHES="$(git rev-parse --abbrev-ref HEAD)|${PROTECTED_BRANCHES}"
-    git branch -r --merged | egrep -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
+    git branch -r --merged | grep -E -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
 }
 function _git_ls_merged_local_ {
     _PROTECTED_BRANCHES="$(git rev-parse --abbrev-ref HEAD)|${PROTECTED_BRANCHES}"
-    git branch --merged | egrep -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
+    git branch --merged | grep -E -v "${_PROTECTED_BRANCHES}" | xargs -n 1 echo
 }
 
 function gitlsmerged {
@@ -262,8 +206,8 @@ function gitrmmerged {
     done
 }
 
-export JAVA_HOME=/usr/lib/jvm/default-java
-export NODE_PATH="/usr/local/lib/node_modules"
+# export JAVA_HOME=/usr/lib/jvm/default
+# export NODE_PATH="/usr/local/lib/node_modules"
 
 docker-remove-containers() {
     docker stop $(docker ps -aq)
@@ -288,6 +232,8 @@ function check-ip {
 }
 
 export PATH=~/.local/bin:$PATH  # Used by pip install
+export PATH=~/bin:$PATH
+export PATH=./node_modules/.bin:$PATH  # Use local npm before global
 
 # stty intr ^J  # So I can map ^C to copy
 
@@ -296,10 +242,6 @@ source_if_exists $HOME/analyzere/users/wolfe/.bashrc
 function npmfind {
     find $1 -not \( -name node_modules -prune \) "${@:2}"
 }
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 function terror {
     terraform "$1" -var-file=config/$(terraform workspace show).tfvars "${@:2}"
@@ -350,3 +292,9 @@ function gitblame {
         echo $hash $(git log -1 --pretty='%<(12,trunc)%s' $hash) '|' $others
     done
 }
+
+function find {
+    /usr/bin/find $1 -name node_modules -prune -o "${@:2}"
+}
+
+eval "$(pyenv init --path)"
